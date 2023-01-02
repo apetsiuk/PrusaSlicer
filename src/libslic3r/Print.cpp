@@ -817,6 +817,7 @@ void Print::auto_assign_extruders(ModelObject* model_object) const
 // Slicing process, running at a background thread.
 void Print::process()
 {
+    std::cout << "~~~~~~~~~~~~~~~ void Print::process() ~~~~~~~~~~~~~~~~~" << std::endl;
     name_tbb_thread_pool_threads_set_locale();
 
     BOOST_LOG_TRIVIAL(info) << "Starting the slicing process." << log_memory_info();
