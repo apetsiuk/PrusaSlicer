@@ -1,3 +1,4 @@
+layer batch slicing
 
 ![PrusaSlicer logo](/resources/icons/PrusaSlicer.png?raw=true)
 
