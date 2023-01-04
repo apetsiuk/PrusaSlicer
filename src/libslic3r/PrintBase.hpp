@@ -405,6 +405,8 @@ public:
     virtual void            set_task(const TaskParams &params) = 0;
     // Perform the calculation. This is the only method that is to be called at a worker thread.
     virtual void            process() = 0;
+    // This function checks the cumulative print height and intersections between regions in the neighboring layers 
+    virtual void            layer_batch_labeling() = 0;
     // Clean up after process() finished, either with success, error or if canceled.
     // The adjustments on the Print / PrintObject data due to set_task() are to be reverted here.
     virtual void            finalize() = 0;

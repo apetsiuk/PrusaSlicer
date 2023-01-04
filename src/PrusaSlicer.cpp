@@ -530,6 +530,8 @@ int CLI::run(int argc, char **argv)
                         std::string outfile_final;
                         print->process();
                         if (printer_technology == ptFFF) {
+                            // Here we do the LayerRegions intersection check for layer batching
+                            print->layer_batch_labeling();
                             // The outfile is processed by a PlaceholderParser.
                             outfile = fff_print.export_gcode(outfile, nullptr, nullptr);
                             outfile_final = fff_print.print_statistics().finalize_output_path(outfile);

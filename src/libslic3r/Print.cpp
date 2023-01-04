@@ -881,6 +881,13 @@ void Print::process()
     BOOST_LOG_TRIVIAL(info) << "Slicing process finished." << log_memory_info();
 }
 
+
+void Print::layer_batch_labeling() {
+    // This function checks the cumulative print height and 
+    // intersections between regions in the neighboring layers 
+    std::cout << "-- layer_batch_labeling() --" << std::endl;
+}
+
 // G-code export process, running at a background thread.
 // The export_gcode may die for various reasons (fails to process output_filename_format,
 // write error into the G-code, cannot execute post-processing scripts).

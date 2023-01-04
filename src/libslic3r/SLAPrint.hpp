@@ -418,6 +418,7 @@ public:
     ApplyStatus         apply(const Model &model, DynamicPrintConfig config) override;
     void                set_task(const TaskParams &params) override { PrintBaseWithState<SLAPrintStep, slapsCount>::set_task_impl(params, m_objects); }
     void                process() override;
+    void                layer_batch_labeling() override;
     void                finalize() override { PrintBaseWithState<SLAPrintStep, slapsCount>::finalize_impl(m_objects); }
     // Returns true if an object step is done on all objects and there's at least one object.
     bool                is_step_done(SLAPrintObjectStep step) const;

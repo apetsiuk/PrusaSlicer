@@ -589,6 +589,11 @@ bool SLAPrint::invalidate_step(SLAPrintStep step)
     return invalidated;
 }
 
+void SLAPrint::layer_batch_labeling()
+{
+    std::cout << "-- SLA layer_batch_labeling() --" << std::endl;
+}
+
 void SLAPrint::process()
 {
     if (m_objects.empty())
