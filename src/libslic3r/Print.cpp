@@ -885,7 +885,27 @@ void Print::process()
 void Print::layer_batch_labeling() {
     // This function checks the cumulative print height and 
     // intersections between regions in the neighboring layers 
+    double safe_batch_size = 0.66; // mm
+    double cumulative_layer_height = 0.0; // mm
+    size_t    batch_index            = 0;
+
+    // right now it works for one onject only
+    for (size_t layer_idx = 0; layer_idx < m_objects[0]->m_layers.size(); layer_idx++) {
+        cumulative_layer_height += m_objects[0]->m_layers[0]->height;
+        std::cout << "cumulative_layer_height=" << cumulative_layer_height << std::endl;
+        if (cumulative_layer_height >= safe_batch_size) { 
+            batch_index += 1;
+            cumulative_layer_height = 0;
+        }
+        m_objects[0]->m_layers[layer_idx]->batch_index = batch_index;
+        std::cout << "batch_index=" << batch_index << std::endl;
+    }
+    
+    
+
+
     std::cout << "-- layer_batch_labeling() --" << std::endl;
+
 }
 
 // G-code export process, running at a background thread.
