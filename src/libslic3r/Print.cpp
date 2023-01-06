@@ -933,6 +933,31 @@ std::string Print::export_gcode(const std::string& path_template, GCodeProcessor
     return path.c_str();
 }
 
+
+std::string Print::export_batched_gcode(const std::string& path_template, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb)
+{
+    // output everything to a G-code file
+    // The following call may die if the output_filename_format template substitution fails.
+    std::string path = this->output_filepath(path_template);
+    std::string message;
+    if (!path.empty() && result == nullptr) {
+        // Only show the path if preview_data is not set -> running from command line.
+        message = L("Exporting batched G-code");
+        message += " to ";
+        message += path;
+    }
+    else
+        message = L("Generating batched G-code");
+    this->set_status(90, message);
+
+    // Create GCode on heap, it has quite a lot of data.
+    std::unique_ptr<GCode> gcode(new GCode);
+    gcode->do_batched_export(this, path.c_str(), result, thumbnail_cb);
+    return path.c_str();
+}
+
+
+
 void Print::_make_skirt()
 {
     // First off we need to decide how tall the skirt must be.

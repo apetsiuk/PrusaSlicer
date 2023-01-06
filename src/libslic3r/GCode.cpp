@@ -835,6 +835,109 @@ void GCode::do_export(Print* print, const char* path, GCodeProcessorResult* resu
     PROFILE_OUTPUT(debug_out_path("gcode-export-profile.txt").c_str());
 }
 
+void GCode::do_batched_export(Print* print, const char* path, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb)
+{
+    PROFILE_CLEAR();
+
+    CNumericLocalesSetter locales_setter;
+
+    // Does the file exist? If so, we hope that it is still valid.
+    {
+        PrintStateBase::StateWithTimeStamp state = print->step_state_with_timestamp(psGCodeExport);
+        if (!state.enabled || (state.state == PrintStateBase::DONE && boost::filesystem::exists(boost::filesystem::path(path))))
+            return;
+    }
+
+    // Enabled and either not done, or marked as done while the output file is missing.
+    print->set_started(psGCodeExport);
+
+    // check if any custom gcode contains keywords used by the gcode processor to
+    // produce time estimation and gcode toolpaths
+    std::vector<std::pair<std::string, std::string>> validation_res = DoExport::validate_custom_gcode(*print);
+    if (!validation_res.empty()) {
+        std::string reports;
+        for (const auto& [source, keyword] : validation_res) {
+            reports += source + ": \"" + keyword + "\"\n";
+        }
+        print->active_step_add_warning(PrintStateBase::WarningLevel::NON_CRITICAL,
+            _(L("In the custom G-code were found reserved keywords:")) + "\n" +
+            reports +
+            _(L("This may cause problems in g-code visualization and printing time estimation.")));
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "Exporting G-code..." << log_memory_info();
+
+    // Remove the old g-code if it exists.
+    boost::nowide::remove(path);
+
+    std::string path_tmp(path);
+    path_tmp += ".tmp";
+
+    m_processor.initialize(path_tmp);
+    GCodeOutputStream file(boost::nowide::fopen(path_tmp.c_str(), "wb"), m_processor);
+    if (!file.is_open())
+        throw Slic3r::RuntimeError(std::string("G-code export to ") + path + " failed.\nCannot open the file for writing.\n");
+
+    try {
+        m_placeholder_parser_failed_templates.clear();
+        this->_do_export(*print, file, thumbnail_cb);
+        file.flush();
+        if (file.is_error()) {
+            file.close();
+            boost::nowide::remove(path_tmp.c_str());
+            throw Slic3r::RuntimeError(std::string("G-code export to ") + path + " failed\nIs the disk full?\n");
+        }
+    }
+    catch (std::exception& /* ex */) {
+        // Rethrow on any exception. std::runtime_exception and CanceledException are expected to be thrown.
+        // Close and remove the file.
+        file.close();
+        boost::nowide::remove(path_tmp.c_str());
+        throw;
+    }
+    file.close();
+
+    if (!m_placeholder_parser_failed_templates.empty()) {
+        // G-code export proceeded, but some of the PlaceholderParser substitutions failed.
+        //FIXME localize!
+        std::string msg = std::string("G-code export to ") + path + " failed due to invalid custom G-code sections:\n\n";
+        for (const auto& name_and_error : m_placeholder_parser_failed_templates)
+            msg += name_and_error.first + "\n" + name_and_error.second + "\n";
+        msg += "\nPlease inspect the file ";
+        msg += path_tmp + " for error messages enclosed between\n";
+        msg += "        !!!!! Failed to process the custom G-code template ...\n";
+        msg += "and\n";
+        msg += "        !!!!! End of an error report for the custom G-code template ...\n";
+        msg += "for all macro processing errors.";
+        throw Slic3r::PlaceholderParserError(msg);
+    }
+
+    BOOST_LOG_TRIVIAL(debug) << "Start processing gcode, " << log_memory_info();
+    // Post-process the G-code to update time stamps.
+    m_processor.finalize(true);
+    //    DoExport::update_print_estimated_times_stats(m_processor, print->m_print_statistics);
+    DoExport::update_print_estimated_stats(m_processor, m_writer.extruders(), print->m_print_statistics);
+    if (result != nullptr) {
+        *result = std::move(m_processor.extract_result());
+        // set the filename to the correct value
+        result->filename = path;
+    }
+    BOOST_LOG_TRIVIAL(debug) << "Finished processing gcode, " << log_memory_info();
+
+    if (rename_file(path_tmp, path))
+        throw Slic3r::RuntimeError(
+            std::string("Failed to rename the output G-code file from ") + path_tmp + " to " + path + '\n' +
+            "Is " + path_tmp + " locked?" + '\n');
+
+    BOOST_LOG_TRIVIAL(info) << "Exporting G-code finished" << log_memory_info();
+    print->set_done(psGCodeExport);
+
+    // Write the profiler measurements to file
+    PROFILE_UPDATE();
+    PROFILE_OUTPUT(debug_out_path("gcode-export-profile.txt").c_str());
+}
+
+
 // free functions called by GCode::_do_export()
 namespace DoExport {
     static void init_gcode_processor(const PrintConfig& config, GCodeProcessor& processor, bool& silent_time_estimator_enabled)
