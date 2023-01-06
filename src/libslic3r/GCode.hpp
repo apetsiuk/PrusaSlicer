@@ -228,6 +228,7 @@ private:
         GCodeProcessor   &m_processor;
     };
     void            _do_export(Print &print, GCodeOutputStream &file, ThumbnailsGeneratorCallback thumbnail_cb);
+    void            _do_batched_export(Print& print, GCodeOutputStream& file, ThumbnailsGeneratorCallback thumbnail_cb);
 
     static std::vector<LayerToPrint>        		                   collect_layers_to_print(const PrintObject &object);
     static std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>> collect_layers_to_print(const Print &print);
@@ -269,6 +270,13 @@ private:
         std::vector<LayerToPrint>                layers_to_print,
         const size_t                             single_object_idx,
         GCodeOutputStream                       &output_stream);
+
+    void process_sequential_batched_layers(
+        const Print& print,
+        const ToolOrdering& tool_ordering,
+        std::vector<LayerToPrint>                layers_to_print,
+        const size_t                             single_object_idx,
+        GCodeOutputStream& output_stream);
 
     void            set_last_pos(const Point &pos) { m_last_pos = pos; m_last_pos_defined = true; }
     bool            last_pos_defined() const { return m_last_pos_defined; }
