@@ -1,7 +1,6 @@
 <img src="_images/PrusaSlicer_batched2.png" alt="logo" width="100"/>
 
-# PrusaSlicer
-### Interlayer color clustering (tool aggregation)
+# PrusaSlicer: Interlayer color clustering (tool aggregation fork :fork_and_knife:)
 
 [PrusaSlicer](https://www.prusa3d.com/prusaslicer/) takes 3D models (STL, OBJ, AMF) and converts them into G-code instructions for FFF printers or PNG layers for mSLA 3D printers. It's compatible with any modern printer based on the RepRap toolchain, including all those based on the Marlin, Prusa, Sprinter and Repetier firmware. It also works with Mach3, LinuxCNC and Machinekit controllers.
 
