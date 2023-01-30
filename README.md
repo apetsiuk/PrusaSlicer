@@ -1,5 +1,7 @@
 ![PrusaSlicer logo](/_images/PrusaSlicer_batched2.png?raw=true)
 
+<img src="_images/PrusaSlicer_batched2.png" alt="logo" width="100"/>
+
 # PrusaSlicer
 ### Interlayer color clustering (tool aggregation)
 
