@@ -2197,6 +2197,28 @@ void GCode::process_sequential_batched_layers(
     GCodeOutputStream& output_stream)
 {
     std::cout << "~~~~~~~~~~~~~~~ process_sequential_batched_layers() ~~~~~~~~~~~~~~~" << std::endl;
+
+    for (size_t layer_number = 0; layer_number < layers_to_print.size(); layer_number++) {
+        LayerToPrint& layer = layers_to_print[0];
+        size_t region_in_batch = 3;
+        this->process_layer_batched_region(print, { std::move(layer) }, tool_ordering.tools_for_layer(layer.print_z()), &layer == &layers_to_print.back(), nullptr, region_in_batch, single_object_idx);
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
     // The pipeline is variable: The vase mode filter is optional.
     size_t layer_to_print_idx = 0;
     const auto generator = tbb::make_filter<void, GCode::LayerResult>(slic3r_tbb_filtermode::serial_in_order,
@@ -2243,6 +2265,9 @@ void GCode::process_sequential_batched_layers(
         tbb::parallel_pipeline(12, generator & cooling & find_replace & output);
     else
         tbb::parallel_pipeline(12, generator & cooling & output);
+
+
+    */
     output_stream.find_replace_enable();
 }
 

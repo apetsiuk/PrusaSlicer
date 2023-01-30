@@ -25,6 +25,8 @@
 #include <boost/log/trivial.hpp>
 #include <boost/regex.hpp>
 
+#include <map>
+
 // Mark string for localization and translate.
 #define L(s) Slic3r::I18N::translate(s)
 
@@ -883,6 +885,84 @@ void Print::process()
 
 
 void Print::layer_batch_labeling() {
+
+
+    struct PrintOrder
+    {
+        size_t iteration_idx;
+        size_t batch_idx;
+        size_t layer_idx;
+        size_t region_idx;
+    };
+
+    std::map<size_t, PrintOrder> printMap;
+
+    size_t iteration_idx = 0;
+    size_t batch_idx = 0;
+
+    size_t cumulative_layer_height = 0;
+    size_t current_processing_region = 0;
+    size_t current_processing_layer = 0;
+    size_t last_processing_layer;
+    size_t last_processing_region;
+
+
+
+    LayerRegion *DOWN_layer_region1 = m_objects[0]->m_layers[4]->get_region(0);
+    LayerRegion* UP_layer_region1 = m_objects[0]->m_layers[5]->get_region(0);
+    Polygons DOWN_poly_0, UP_poly_0;
+    DOWN_poly_0 = to_polygons(DOWN_layer_region1->slices.surfaces);
+    UP_poly_0 = to_polygons(UP_layer_region1->slices.surfaces);
+    Polylines intersection_a = intersection_pl(DOWN_poly_0, UP_poly_0);
+
+    // find a region in the 0th layer that lies on the bed
+    current_processing_layer = 0;
+    for (size_t region_idx = 0; region_idx < m_objects[0]->num_printing_regions(); region_idx++) {
+        LayerRegion* layer_region;
+        layer_region = m_objects[0]->m_layers[current_processing_layer]->get_region(region_idx);
+        if (layer_region->slices.size() != 0) {
+            current_processing_region = region_idx;
+            printMap[0] = PrintOrder{ iteration_idx,batch_idx,current_processing_layer,current_processing_region };
+            break;
+        }
+    }
+
+    for (size_t layer_idx = 0; layer_idx < m_objects[0]->m_layers.size(); layer_idx++) {
+        //m_objects[0]->m_layers[0]->print_z; // print_z=0.4 -> slice_z = 0.3
+        //m_objects[0]->m_layers[0]->slice_z; // slice_z = print_z-0.1
+        
+        // we do not have to check the print_z for the 1st layer since if region 
+        // slice is empty -> it means this color/tool does not lay on the bed
+        
+
+
+        for (size_t region_idx = 0; region_idx < m_objects[layer_idx]->num_printing_regions(); region_idx++) {
+            LayerRegion *layer_region;
+            layer_region = m_objects[0]->m_layers[0]->get_region(region_idx);
+            if (layer_region->slices.size() != 0 && region_idx == current_processing_region) {
+                current_processing_region = region_idx;
+                current_processing_layer = layer_idx;
+                
+                printMap[0] = PrintOrder{iteration_idx,batch_idx,current_processing_layer,current_processing_region };
+                iteration_idx += 1;
+                cumulative_layer_height += m_objects[0]->m_layers[0]->height;
+            }
+            else {
+                current_processing_region += 1;
+                if (current_processing_region == m_objects[0]->num_printing_regions()) {
+                    current_processing_region = 0;
+                }
+            }
+            
+
+            
+        }
+
+        
+
+        printMap[layer_idx] = PrintOrder{ 0,0,1,2 };
+    }
+
     // This function checks the cumulative print height and 
     // intersections between regions in the neighboring layers 
     double safe_batch_size = 0.66; // mm
