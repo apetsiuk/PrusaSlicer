@@ -6,14 +6,63 @@
 
 PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community. See the [project homepage](https://www.prusa3d.com/slic3r-prusa-edition/) and the [documentation directory](doc/) for more information.
 
+### Dependencies
+- [Boost](https://www.boost.org/)
+- [Eigen](https://eigen.tuxfamily.org/dox/GettingStarted.html)
+- [Clipper](https://github.com/AngusJohnson/Clipper2)
+- [LibIGL](https://libigl.github.io/)
+- [OpenGL](https://www.opengl.org/)
+- [CGAL](https://www.cgal.org/)
+
 
 ### Added features
 
 The given fork introduces interlayer color clustering (tool aggregation) features.
 
+- :white_check_mark: Interlayer agglomerative tool clustering
+
+
 ![Animation](_images/eiffel_tower_animation.gif)
 
+### Remaining features under development
+- :x: Wipe tower generation for new g-code version
+- :x: Support clustering along with sliced layers
+- :x: Generate updated print statistics
+- :x: Integrate control elements to visual GUI
+- :x: Visualize processed g-code in GUI window
+- :x: Implement slide bar for clustered g-code regions in GUI
 
+### Required PrusaSlicer parameters
+- Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
+- Disable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> uncheck)
+- Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
+- Extruder lift Z retraction (Printer settings -> Retraction -> Lift Z = 1.6 mm for each extruder)
+
+### Test 3MF project
+3 colors (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height)
+
+![intersection_test_4_8_layers_1_60mm](_images/intersection_test_4_8_layers_1_60mm.png)
+
+```
+Initial printing map (regulr printing):        Agglomerative tool clustering:
+{L0, R0}                                                      {L0, R0}
+{L1, R0}                                                      {L1, R0}
+{L2, R0}                                                      {L2, R0}
+{L2, R1}                                                      {L3, R0}
+{L3, R0}                                                      {L2, R1}
+{L3, R1}                                                      {L3, R1}
+{L3, R2}                                                      {L4, R1}
+{L4, R0}                                                      {L5, R1}
+{L4, R1}                                                      {L3, R2}
+{L4, R2}                                                      {L4, R2}
+{L5, R0}                                                      {L5, R2}
+{L5, R1}                                                      {L6, R2}
+{L5, R2}                                                      {L4, R0}
+{L6, R0}                                                      {L5, R0}
+{L6, R1}                                                      {L6, R0}
+{L6, R2}                                                      {L6, R1}
+{L7, R2}                                                      {L7, R2}
+```
 
 ### How to build?
 
@@ -22,6 +71,51 @@ these documentation pages:
 * [Linux](doc/How%20to%20build%20-%20Linux%20et%20al.md)
 * [macOS](doc/How%20to%20build%20-%20Mac%20OS.md)
 * [Windows](doc/How%20to%20build%20-%20Windows.md)
+
+##### Windows:
+***1. Install the tools***
+
+Install Visual Studio Community 2019 from visualstudio.microsoft.com/vs/. Older versions are not supported as PrusaSlicer requires support for C++17. Select all workload options for C++ and make sure to launch Visual Studio after install (to ensure that the full setup completes).
+
+Install git for Windows from gitforwindows.org Download and run the exe accepting all defaults.
+
+***2. Download sources***
+Clone the respository. To place it in C:\src\PrusaSlicer, run:
+```
+c:> mkdir src
+c:> cd src
+c:\src> git clone https://github.com/prusa3d/PrusaSlicer.git
+```
+
+***3. Compile the dependencies***
+Dependencies are updated seldomly, thus they are compiled out of the PrusaSlicer source tree. Go to the Windows Start Menu and Click on "Visual Studio 2019" folder, then select the ->"x64 Native Tools Command Prompt" to open a command window and run the following:
+```
+cd c:\src\PrusaSlicer\deps
+mkdir build
+cd build
+cmake .. -G "Visual Studio 16 2019" -DDESTDIR="c:\src\PrusaSlicer-deps"
+msbuild /m ALL_BUILD.vcxproj
+```
+***4. Generate Visual Studio project***
+Go to the Windows Start Menu and Click on "Visual Studio 2019" folder, then select the ->"x64 Native Tools Command Prompt" to open a command window and run the following:
+```
+cd c:\src\PrusaSlicer\
+mkdir build
+cd build
+cmake .. -G "Visual Studio 16 2019" -DCMAKE_PREFIX_PATH="c:\src\PrusaSlicer-deps\usr\local"
+```
+
+***5. Compile PrusaSlicer***
+Double-click c:\src\PrusaSlicer\build\PrusaSlicer.sln to open in Visual Studio 2019. Select **PrusaSlicer_app_gui** as your startup project (right-click->Set as Startup Project).
+
+Run Build->Rebuild Solution once to populate all required dependency modules. This is NOT done automatically when you build/run. If you run both Debug and Release variants, you will need to do this once for each.
+
+Debug->Start Debugging or press F5
+
+PrusaSlicer should start. You're up and running!
+
+*note: Thanks to @douggorgen for the original guide, as an answer for an issue.*
+
 
 
 ### PrusaSlicer license
