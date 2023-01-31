@@ -541,6 +541,7 @@ public:
     void                set_task(const TaskParams &params) override { PrintBaseWithState<PrintStep, psCount>::set_task_impl(params, m_objects); }
     void                process() override;
     void                layer_batch_labeling() override;
+    
     void                finalize() override { PrintBaseWithState<PrintStep, psCount>::finalize_impl(m_objects); }
 
     // Exports G-code into a file name based on the path_template, returns the file path of the generated G-code file.

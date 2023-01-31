@@ -884,9 +884,449 @@ void Print::process()
 }
 
 
+
+
+// --------------------------------------------------------------------
+
+// ATC - Agglomerative Tool Clustering
+
+struct ATC_printing_piece {
+    int layer;
+    int region;
+    bool state;
+    int batch;
+    ATC_printing_piece* next;
+}*ATC_default = NULL;
+
+
+class ATC_linked_list
+{
+private:
+    ATC_printing_piece* head, * tail;
+public:
+    ATC_linked_list()
+    {
+        head = NULL;
+        tail = NULL;
+    }
+
+    void append_node(int layer, int region, bool state, int batch)
+    {
+        ATC_printing_piece* tmp = new ATC_printing_piece;
+        tmp->layer = layer;
+        tmp->region = region;
+        tmp->state = state;
+        tmp->batch = batch;
+        tmp->next = NULL;
+
+        if (head == NULL)
+        {
+            head = tmp;
+            tail = tmp;
+        }
+        else
+        {
+            tail->next = tmp;
+            tail = tail->next;
+        }
+    }
+
+    ATC_printing_piece* gethead()
+    {
+        return head;
+    }
+
+    static void display(ATC_printing_piece* head)
+    {
+        if (head == NULL)
+        {
+            std::cout << "NULL" << std::endl;
+        }
+        else
+        {
+            std::cout << "{L" << head->layer << ", R" << head->region << ", s" << head->state << ", b" << head->batch << "}" << std::endl;
+            display(head->next);
+        }
+    }
+
+    void front(int layer, int region, bool state, int batch)
+    {
+        ATC_printing_piece* tmp = new ATC_printing_piece;
+        tmp->layer = layer;
+        tmp->region = region;
+        tmp->state = state;
+        tmp->batch = batch;
+        tmp->next = head;
+        head = tmp;
+    }
+
+    std::pair<int, int> get_layer_and_region_ids(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int layer_id = temp->layer;
+        int region_id = temp->region;
+        return std::make_pair(layer_id, region_id);
+    }
+
+
+    int get_layer_id(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int layer_id = temp->layer;
+        return layer_id;
+    }
+
+    bool get_state(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int state = temp->state;
+        return state;
+    }
+
+    int get_region_id(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int region_id = temp->region;
+        return region_id;
+    }
+
+    int get_count()
+    {
+        int number_of_nodes = 0;
+        ATC_printing_piece* current = head;
+        while (current != NULL)
+        {
+            number_of_nodes++;
+            current = current->next;
+        }
+
+        return number_of_nodes;
+    }
+
+    void delete_node(int position)
+    {
+        ATC_printing_piece* temp;
+        ATC_printing_piece* prev;
+
+        if (position == 1)
+        {
+            prev = head;
+            temp = head->next;
+            head = temp;
+            delete(prev);
+        }
+        else
+        {
+            temp = head;
+            prev = NULL;
+            for (int i = 0; i < position - 1 && temp; i++)
+            {
+                prev = temp;
+                temp = temp->next;
+            }
+            if (prev && temp)
+            {
+                prev->next = temp->next;
+                delete(temp);
+            }
+        }
+    }
+
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int layer, int region)
+    {
+        if (p == NULL)
+            return NULL;
+        if (layer == p->layer && region == p->region)
+        {
+            //std::cout << "///////////" << p->layer << ", " << p->region << std::endl;
+            return p;
+        }
+        return node_search(p->next, layer, region);
+    }
+
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int state)
+    {
+        if (p == NULL)
+            return NULL;
+        if (p->state == state)
+        {
+            return p;
+        }
+        return node_search(p->next, state);
+    }
+
+    struct ATC_printing_piece* get_node(int position)
+    {
+        ATC_printing_piece* node;
+        node = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            node = node->next;
+        }
+        return node;
+    }
+
+    int find_printing_piece_position(struct ATC_printing_piece* p, struct ATC_printing_piece* first, int layer, int region)
+    {
+        int pos = 0;
+        ATC_printing_piece* q;
+        while (p != NULL)
+        {
+            pos += 1;
+            if (layer == p->layer && region == p->region)
+            {
+                q->next = p->next;
+                p->next = first;
+                first = p;
+                return pos;
+            }
+            q = p;
+            p = p->next;
+        }
+        return -1;
+    }
+
+    void state_done(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        temp->state = 1;
+    }
+
+    bool check_state(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        if (temp->state == 1)
+            return 1;
+        else
+            return 0;
+    }
+
+};
+
+
+
+
+double ATC_check_region_intersection(LayerRegion& upper, LayerRegion& lower)
+{
+    ExPolygons A_polygons = to_expolygons(upper.slices.surfaces); // upper
+    ExPolygons B_polygons = to_expolygons(lower.slices.surfaces); // lower
+    ExPolygons region_intersection = intersection_ex(A_polygons, B_polygons);
+
+    double A_expolygon_area = area(A_polygons);
+    double B_expolygon_area = area(B_polygons);
+    double intersection_area = area(region_intersection);
+    return intersection_area;
+}
+
+
+// --------------------------------------------------------------------
+
+
+
 void Print::layer_batch_labeling() {
+    std::cout << "-- layer_batch_labeling() --" << std::endl;
+
+    ATC_linked_list printing_map_initial, printing_map_batched;
+
+    std::cout << "///////////////// Generate list of printing pieces ////////////////" << std::endl;
+    for (size_t L = 0; L < this->get_object(0)->layers().size(); L++) {
+        for (size_t R = 0; R < this->m_print_regions.size(); R++)
+        {
+            if (this->get_object(0)->layers()[L]->regions()[R]->slices.surfaces.size() != 0)
+            {
+                printing_map_initial.append_node(L, R, 0, 0); // layer, region, state, batch
+            }
+        }
+    }
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "printing_map_initial.get_count() = " << printing_map_initial.get_count() << std::endl;
+    std::cout << "printing_map_batched.get_count() = " << printing_map_batched.get_count() << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+    std::cout << "PRINTING MAP INITIAL:" << std::endl;
+    ATC_linked_list::display(printing_map_initial.gethead());
+    std::cout << "PRINTING MAP BATCHED:" << std::endl;
+    ATC_linked_list::display(printing_map_batched.gethead());
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "printing_map_initial.get_count() = " << printing_map_initial.get_count() << std::endl;
+    std::cout << "printing_map_batched.get_count() = " << printing_map_batched.get_count() << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+    // we should iterate over all the positions in the printing_map list
+    // get the initial count of all the existing pinting pieces
+
+    int printing_pieces_count = printing_map_initial.get_count();
+    double cum_layer_height = 0;
+    double safe_height = 0.35;
+    int batch_new = 0;
+    double region_intersection = 0;
+    int number_of_colors = this->get_object(0)->all_regions().size();
+
+    int max_layers_in_object = this->get_object(0)->layers().size();
+    int ap_iterator = 0;
+    int ap_step = 0;
+    int intersected_node_state;
+    int intersected_region;
+    struct ATC_printing_piece* node;
+    struct ATC_printing_piece* last_node;
+    int overall_intersections_below = 0;
+    node = NULL;
+    last_node = NULL;
+    int current_layer_idx, current_region_idx, candidate_layer_idx, candidate_region_idx;
+
+    std::cout << "*********************************************" << std::endl;
+    while (printing_map_batched.get_count() <= printing_map_initial.get_count() - 1)
+    {
+        ap_step += 1;
+        // get the first node in the list with zero-state (which is not done)
+        if (last_node != NULL)
+            node = last_node;
+        if (last_node == NULL)
+            node = printing_map_initial.node_search(printing_map_initial.gethead(), 0); // get first node with zero-state
+
+        current_layer_idx = node->layer;
+        current_region_idx = node->region;
+        candidate_layer_idx = node->layer + 1;
+        candidate_region_idx = node->region; // the same region
+
+        std::cout << "--STEP-- " << ap_step << ", PROCESSED NODES=" << ap_iterator << std::endl;
+        std::cout << "got node {L" << current_layer_idx << ", R" << current_region_idx << "}" << " -- candidate {Lc" << candidate_layer_idx << ", Rc" << candidate_region_idx << "}" << std::endl;
 
 
+
+        if (node->state == 0)
+        {
+            printing_map_batched.append_node(current_layer_idx, current_region_idx, 1, batch_new); // state = 1
+            last_node = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx);
+            printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx)->state = 1;
+            std::cout << "appended node {L" << current_layer_idx << ", R" << current_region_idx << "}" << std::endl;
+            ap_iterator += 1;
+        }
+
+        if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx) && candidate_layer_idx < max_layers_in_object)
+        {
+            Layer* layer_candidate = this->get_object(0)->layers()[candidate_layer_idx];
+            Layer* layer_current = this->get_object(0)->layers()[current_layer_idx];
+            LayerRegion& region_candidate = *layer_candidate->regions()[current_region_idx];
+
+            overall_intersections_below = 0;
+            for (int color = 0; color < number_of_colors; color++)
+            {
+                LayerRegion& region_below = *layer_current->regions()[color];
+                region_intersection = ATC_check_region_intersection(region_candidate, region_below) / 1e+10;
+                std::cout << "checking intersections for {L" << current_layer_idx << ", R" << color << "}: region_intersection=" << region_intersection << std::endl;
+                if (printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color))
+                {
+                    intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color)->state;
+                    if (color != current_region_idx && region_intersection > 0 && intersected_node_state == 0)
+                    {
+                        overall_intersections_below += 1;
+                    }
+                }
+            }
+
+            for (int color = 0; color < number_of_colors; color++)
+            {
+                LayerRegion& region_below = *layer_current->regions()[color];
+                region_intersection = ATC_check_region_intersection(region_candidate, region_below) / 1e+10;
+                std::cout << "checking intersections for {L" << current_layer_idx << ", R" << color << "}: region_intersection=" << region_intersection << std::endl;
+                if (printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color))
+                {
+                    intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color)->state;
+                    if (color != current_region_idx && (region_intersection > 0 && intersected_node_state == 0))
+                    {
+                        // stop, remap
+                        std::cout << "detected intersection with {L" << current_layer_idx << ", R" << color << "}" << std::endl;
+                        std::cout << "breaking" << std::endl;
+                        last_node = NULL;
+                        break;
+                    }
+                    if (color != current_region_idx && region_intersection == 0 && overall_intersections_below == 0)
+                    {
+                        // append new node to the batched map
+                        printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, 1, batch_new); // state = 1
+                        last_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx);
+                        if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx))
+                        {
+                            printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx)->state = 1;
+                            ap_iterator += 1;
+                            std::cout << "no intersections --> appending node {L" << candidate_layer_idx << ", R" << candidate_region_idx << "}" << std::endl;
+                            break;
+                        }
+                        else
+                        {
+                            last_node = NULL;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    last_node = NULL;
+                    continue;
+                }
+            }
+        }
+
+        if (candidate_layer_idx >= max_layers_in_object || printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx) == NULL)
+        {
+            last_node = NULL;
+            continue;
+        }
+
+        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << "printing_map_initial.get_count() = " << printing_map_initial.get_count() << std::endl;
+        std::cout << "printing_map_batched.get_count() = " << printing_map_batched.get_count() << std::endl;
+        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+        std::cout << "PRINTING MAP INITIAL:" << std::endl;
+        ATC_linked_list::display(printing_map_initial.gethead());
+        std::cout << "PRINTING MAP BATCHED:" << std::endl;
+        ATC_linked_list::display(printing_map_batched.gethead());
+
+        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << "printing_map_initial.get_count() = " << printing_map_initial.get_count() << std::endl;
+        std::cout << "printing_map_batched.get_count() = " << printing_map_batched.get_count() << std::endl;
+        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+
+    }
+
+
+
+    /*
     struct PrintOrder
     {
         size_t iteration_idx;
@@ -982,6 +1422,10 @@ void Print::layer_batch_labeling() {
     }
     
     
+    */
+
+    
+
 
 
     std::cout << "-- layer_batch_labeling() --" << std::endl;
