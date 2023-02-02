@@ -1,9 +1,19 @@
 <img align="left" width="240" alt="logo" src="_images/PrusaSlicer_batched3.png"/>
 
-# **PrusaSlicer:** Interlayer color clustering [Agglomerative Tool Clustering (ATC) fork]
+# PrusaSlicer: Agglomerative Tool Clustering Fork (ATC, Interlayer color clustering)
 
 ![Animation](_images/eiffel_tower_animation.gif)
 
+**The current fork only works with single-object FFF projects in the PrusaSlicer console version.**
+
+**To switch off the ATC version: change the "allow_layer_batching" variable to "false" (bool allow_layer_batching = false) in PrusaSlicer.cpp and rebuild the source.**
+
+
+### Usage 
+
+prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
+
+----
 
 ### Added features
 
@@ -22,9 +32,7 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - :x: Visualize processed g-code in GUI window
 - :x: Implement slide bar for clustered g-code regions in GUI
 
-**The current fork only works with single-object FFF projects in the PrusaSlicer console version.**
 
-**To switch off the ATC version: change the "allow_layer_batching" variable to "false" (bool allow_layer_batching = false) in PrusaSlicer.cpp and rebuild the source.**
 
 ### Required slicing parameters
 - Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
