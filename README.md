@@ -11,7 +11,10 @@
 
 ### Usage 
 
+```
+cd C:\src\PrusaSlicer\build\src\Release
 prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
+```
 
 ----
 
