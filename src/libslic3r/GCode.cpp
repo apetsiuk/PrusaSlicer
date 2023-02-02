@@ -2205,7 +2205,13 @@ void GCode::process_sequential_batched_layers(
 
     }
 
+    std::cout << "++++++++++++++++++++++++++++++++" << std::endl;
+    ATC_linked_list ATC_printing_map;
 
+    ATC_printing_map = print.m_ATC_printing_map;
+    std::cout << "ATC_printing_map.get_count() = " << ATC_printing_map.get_count() << std::endl;
+    ATC_printing_map.display(ATC_printing_map.gethead());
+    std::cout << "++++++++++++++++++++++++++++++++" << std::endl;
 
 
 

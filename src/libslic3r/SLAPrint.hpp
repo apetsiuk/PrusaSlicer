@@ -388,6 +388,9 @@ struct SLAPrintStatistics
     }
 };
 
+
+
+
 /**
  * @brief This class is the high level FSM for the SLA printing process.
  *

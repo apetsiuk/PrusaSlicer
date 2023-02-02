@@ -513,6 +513,257 @@ class ConstPrintRegionPtrsAdaptor : public ConstVectorOfPtrsAdaptor<PrintRegion>
 };
 */
 
+
+// ATC - Agglomerative Tool Clustering
+
+struct ATC_printing_piece {
+    int layer;
+    int region;
+    bool state;
+    int batch;
+    ATC_printing_piece* next;
+};
+
+
+class ATC_linked_list
+{
+private:
+    ATC_printing_piece* head, * tail;
+public:
+    ATC_linked_list()
+    {
+        head = NULL;
+        tail = NULL;
+    }
+
+    void append_node(int layer, int region, bool state, int batch)
+    {
+        ATC_printing_piece* tmp = new ATC_printing_piece;
+        tmp->layer = layer;
+        tmp->region = region;
+        tmp->state = state;
+        tmp->batch = batch;
+        tmp->next = NULL;
+
+        if (head == NULL)
+        {
+            head = tmp;
+            tail = tmp;
+        }
+        else
+        {
+            tail->next = tmp;
+            tail = tail->next;
+        }
+    }
+
+    ATC_printing_piece* gethead()
+    {
+        return head;
+    }
+
+    static void display(ATC_printing_piece* head)
+    {
+        if (head == NULL)
+        {
+            std::cout << "NULL" << std::endl;
+        }
+        else
+        {
+            std::cout << "{L" << head->layer << ", R" << head->region << ", s" << head->state << ", b" << head->batch << "}" << std::endl;
+            display(head->next);
+        }
+    }
+
+    void front(int layer, int region, bool state, int batch)
+    {
+        ATC_printing_piece* tmp = new ATC_printing_piece;
+        tmp->layer = layer;
+        tmp->region = region;
+        tmp->state = state;
+        tmp->batch = batch;
+        tmp->next = head;
+        head = tmp;
+    }
+
+    std::pair<int, int> get_layer_and_region_ids(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int layer_id = temp->layer;
+        int region_id = temp->region;
+        return std::make_pair(layer_id, region_id);
+    }
+
+
+    int get_layer_id(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int layer_id = temp->layer;
+        return layer_id;
+    }
+
+    bool get_state(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int state = temp->state;
+        return state;
+    }
+
+    int get_region_id(ATC_printing_piece* head, int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int region_id = temp->region;
+        return region_id;
+    }
+
+    int get_count()
+    {
+        int number_of_nodes = 0;
+        ATC_printing_piece* current = head;
+        while (current != NULL)
+        {
+            number_of_nodes++;
+            current = current->next;
+        }
+
+        return number_of_nodes;
+    }
+
+    void delete_node(int position)
+    {
+        ATC_printing_piece* temp;
+        ATC_printing_piece* prev;
+
+        if (position == 1)
+        {
+            prev = head;
+            temp = head->next;
+            head = temp;
+            delete(prev);
+        }
+        else
+        {
+            temp = head;
+            prev = NULL;
+            for (int i = 0; i < position - 1 && temp; i++)
+            {
+                prev = temp;
+                temp = temp->next;
+            }
+            if (prev && temp)
+            {
+                prev->next = temp->next;
+                delete(temp);
+            }
+        }
+    }
+
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int layer, int region)
+    {
+        if (p == NULL)
+            return NULL;
+        if (layer == p->layer && region == p->region)
+        {
+            //std::cout << "///////////" << p->layer << ", " << p->region << std::endl;
+            return p;
+        }
+        return node_search(p->next, layer, region);
+    }
+
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int state)
+    {
+        if (p == NULL)
+            return NULL;
+        if (p->state == state)
+        {
+            return p;
+        }
+        return node_search(p->next, state);
+    }
+
+    struct ATC_printing_piece* get_node(int position)
+    {
+        ATC_printing_piece* node;
+        node = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            node = node->next;
+        }
+        return node;
+    }
+
+    int find_printing_piece_position(struct ATC_printing_piece* p, struct ATC_printing_piece* first, int layer, int region)
+    {
+        int pos = 0;
+        ATC_printing_piece* q;
+        while (p != NULL)
+        {
+            pos += 1;
+            if (layer == p->layer && region == p->region)
+            {
+                q->next = p->next;
+                p->next = first;
+                first = p;
+                return pos;
+            }
+            q = p;
+            p = p->next;
+        }
+        return -1;
+    }
+
+    void state_done(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        temp->state = 1;
+    }
+
+    bool check_state(int position)
+    {
+        ATC_printing_piece* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        if (temp->state == 1)
+            return 1;
+        else
+            return 0;
+    }
+
+};
+
+
+
+
+
+
 // The complete print tray with possibly multiple objects.
 class Print : public PrintBaseWithState<PrintStep, psCount>
 {
@@ -605,7 +856,7 @@ public:
     const Polygon&                   first_layer_convex_hull() const { return m_first_layer_convex_hull; }
 
     const PrintStatistics&      print_statistics() const { return m_print_statistics; }
-    PrintStatistics&            print_statistics() { return m_print_statistics; }
+    ATC_linked_list             get_ATC_printing_map() { return m_ATC_printing_map; }
 
     // Wipe tower support.
     bool                        has_wipe_tower() const;
@@ -619,6 +870,8 @@ public:
     const ToolOrdering&         get_tool_ordering() const { return m_wipe_tower_data.tool_ordering; }
 
     static bool sequential_print_horizontal_clearance_valid(const Print& print, Polygons* polygons = nullptr);
+
+    PrintStatistics& print_statistics() { return m_print_statistics; }
 
 protected:
     // Invalidates the step, and its depending steps in Print.
@@ -659,6 +912,8 @@ private:
 
     // Estimated print time, filament consumed.
     PrintStatistics                         m_print_statistics;
+
+    ATC_linked_list                         m_ATC_printing_map;
 
     // To allow GCode to set the Print's GCodeExport step status.
     friend class GCode;

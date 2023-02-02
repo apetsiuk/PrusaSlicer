@@ -534,6 +534,9 @@ int CLI::run(int argc, char **argv)
                             if (allow_layer_batching) {
                                 // Here we do the LayerRegions intersection check for layer batching
                                 print->layer_batch_labeling();
+                                std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+                                fff_print.get_ATC_printing_map().display(fff_print.get_ATC_printing_map().gethead());
+                                std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                                 outfile = fff_print.export_batched_gcode(outfile, nullptr, nullptr);
                                 outfile_final = fff_print.print_statistics().finalize_output_path(outfile);
                             }
