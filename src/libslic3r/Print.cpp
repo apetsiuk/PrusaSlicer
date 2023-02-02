@@ -944,6 +944,8 @@ void Print::layer_batch_labeling() {
     double safe_height = 0.35;
     int batch_new = 0;
     double region_intersection = 0;
+    double critical_intersection = 0.05;
+
     int number_of_colors = this->get_object(0)->all_regions().size();
 
     int max_layers_in_object = this->get_object(0)->layers().size();
@@ -1002,7 +1004,7 @@ void Print::layer_batch_labeling() {
                 if (printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color))
                 {
                     intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color)->state;
-                    if (color != current_region_idx && region_intersection > 0 && intersected_node_state == 0)
+                    if (color != current_region_idx && region_intersection > critical_intersection && intersected_node_state == 0)
                     {
                         overall_intersections_below += 1;
                     }
@@ -1017,7 +1019,7 @@ void Print::layer_batch_labeling() {
                 if (printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color))
                 {
                     intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, color)->state;
-                    if (color != current_region_idx && (region_intersection > 0 && intersected_node_state == 0))
+                    if (color != current_region_idx && (region_intersection > critical_intersection && intersected_node_state == 0))
                     {
                         // stop, remap
                         std::cout << "detected intersection with {L" << current_layer_idx << ", R" << color << "}" << std::endl;
@@ -1025,7 +1027,7 @@ void Print::layer_batch_labeling() {
                         last_node = NULL;
                         break;
                     }
-                    if (color != current_region_idx && region_intersection == 0 && overall_intersections_below == 0)
+                    if (color != current_region_idx && region_intersection <= critical_intersection && overall_intersections_below == 0)
                     {
                         // append new node to the batched map
                         printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, 1, batch_new); // state = 1

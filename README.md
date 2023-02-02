@@ -1,18 +1,8 @@
 <img align="left" width="240" alt="logo" src="_images/PrusaSlicer_batched3.png"/>
 
-# **PrusaSlicer:** Interlayer color clustering (tool aggregation fork)
+# **PrusaSlicer:** Interlayer color clustering [Agglomerative Tool Clustering (ATC) fork]
 
-[PrusaSlicer](https://www.prusa3d.com/prusaslicer/) takes 3D models (STL, OBJ, AMF) and converts them into G-code instructions for FFF printers or PNG layers for mSLA 3D printers. It's compatible with any modern printer based on the RepRap toolchain, including all those based on the Marlin, Prusa, Sprinter and Repetier firmware. It also works with Mach3, LinuxCNC and Machinekit controllers.
-
-PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community. See the [project homepage](https://www.prusa3d.com/slic3r-prusa-edition/) and the [documentation directory](doc/) for more information.
-
-### Dependencies
-- [Boost](https://www.boost.org/)
-- [Eigen](https://eigen.tuxfamily.org/dox/GettingStarted.html)
-- [Clipper](https://github.com/AngusJohnson/Clipper2)
-- [LibIGL](https://libigl.github.io/)
-- [OpenGL](https://www.opengl.org/)
-- [CGAL](https://www.cgal.org/)
+![Animation](_images/eiffel_tower_animation.gif)
 
 
 ### Added features
@@ -20,11 +10,11 @@ PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro
 The given fork introduces interlayer color clustering (tool aggregation) features.
 
 - :white_check_mark: Interlayer agglomerative tool clustering
+- :white_check_mark: Critical height tracking
+- :white_check_mark: Adjustable level of intersections between neighboring regions
 
 
-![Animation](_images/eiffel_tower_animation.gif)
-
-### Remaining features under development
+### Features under development
 - :x: Wipe tower generation for new g-code version
 - :x: Support clustering along with sliced layers
 - :x: Generate updated print statistics
@@ -32,7 +22,11 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - :x: Visualize processed g-code in GUI window
 - :x: Implement slide bar for clustered g-code regions in GUI
 
-### Required PrusaSlicer parameters
+**The current fork only works with single-object FFF projects in the PrusaSlicer console version.**
+
+**To switch off the ATC version: change the "allow_layer_batching" variable to "false" (bool allow_layer_batching = false) in PrusaSlicer.cpp and rebuild the source.**
+
+### Required slicing parameters
 - Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
 - Disable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> uncheck)
 - Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
@@ -63,6 +57,42 @@ Initial printing map (regulr printing):        Agglomerative tool clustering:
 {L6, R2}                                                      {L6, R1}
 {L7, R2}                                                      {L7, R2}
 ```
+----
+
+### Modified files
+
+- src/PrusaSlicer.cpp
+- src/libslic3r/Layer.hpp
+- src/libslic3r/Print.cpp
+- src/libslic3r/Print.hpp
+- src/libslic3r/PrintBase.hpp
+- src/libslic3r/SLAPrint.cpp
+- src/libslic3r/SLAPrint.hpp
+- src/libslic3r/GCode.cpp
+- src/libslic3r/GCode.hpp
+
+
+Added private members to Slic3r::Layer and Slic3r::Print objects...
+
+
+
+----
+
+[PrusaSlicer](https://www.prusa3d.com/prusaslicer/) takes 3D models (STL, OBJ, AMF) and converts them into G-code instructions for FFF printers or PNG layers for mSLA 3D printers. It's compatible with any modern printer based on the RepRap toolchain, including all those based on the Marlin, Prusa, Sprinter and Repetier firmware. It also works with Mach3, LinuxCNC and Machinekit controllers.
+
+PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community. See the [project homepage](https://www.prusa3d.com/slic3r-prusa-edition/) and the [documentation directory](doc/) for more information.
+
+### Dependencies
+
+- [Boost](https://www.boost.org/)
+- [Eigen](https://eigen.tuxfamily.org/dox/GettingStarted.html)
+- [Clipper](https://github.com/AngusJohnson/Clipper2)
+- [LibIGL](https://libigl.github.io/)
+- [OpenGL](https://www.opengl.org/)
+- [CGAL](https://www.cgal.org/)
+
+
+
 
 ### How to build?
 

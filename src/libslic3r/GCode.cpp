@@ -2229,28 +2229,6 @@ void GCode::process_sequential_batched_layers(
 
 
 
-
-
-
-
-    
-
-    
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     /*
     // The pipeline is variable: The vase mode filter is optional.
     size_t layer_to_print_idx = 0;
