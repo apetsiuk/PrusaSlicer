@@ -2198,20 +2198,47 @@ void GCode::process_sequential_batched_layers(
 {
     std::cout << "~~~~~~~~~~~~~~~ process_sequential_batched_layers() ~~~~~~~~~~~~~~~" << std::endl;
 
+    /*
     for (size_t layer_number = 0; layer_number < layers_to_print.size(); layer_number++) {
         LayerToPrint& layer = layers_to_print[0];
         size_t region_in_batch = 3;
         this->process_layer_batched_region(print, { std::move(layer) }, tool_ordering.tools_for_layer(layer.print_z()), &layer == &layers_to_print.back(), nullptr, region_in_batch, single_object_idx);
 
     }
+    */
 
-    std::cout << "++++++++++++++++++++++++++++++++" << std::endl;
+
     ATC_linked_list ATC_printing_map;
-
     ATC_printing_map = print.m_ATC_printing_map;
     std::cout << "ATC_printing_map.get_count() = " << ATC_printing_map.get_count() << std::endl;
     ATC_printing_map.display(ATC_printing_map.gethead());
-    std::cout << "++++++++++++++++++++++++++++++++" << std::endl;
+
+    struct ATC_printing_piece* printing_piece;
+    for (int print_step = 0; print_step < ATC_printing_map.get_count(); print_step++)
+    {
+        printing_piece = ATC_printing_map.get_node(print_step);
+        int print_layer_idx = printing_piece->layer;
+        int print_region_idx = printing_piece->region;
+
+        GCode::LayerResult printing_piece_gcode;
+        GCode::LayerToPrint& layer = layers_to_print[print_layer_idx];
+        printing_piece_gcode = this->process_layer_batched_region(print, { std::move(layer) },
+            tool_ordering.tools_for_layer(layer.print_z()), &layer == &layers_to_print.back(), nullptr, print_region_idx, single_object_idx);
+        output_stream.write(printing_piece_gcode.gcode);
+    }
+
+
+
+
+
+
+
+    
+
+    
+    
+    
+
 
 
 
