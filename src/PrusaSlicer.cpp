@@ -487,6 +487,9 @@ int CLI::run(int argc, char **argv)
             // modified by the centering and such.
             Model model_copy;
             bool  make_copy = &opt_key != &m_actions.back();
+
+            bool allow_layer_batching = true;
+
             for (Model &model_in : m_models) {
                 if (make_copy)
                     model_copy = model_in;
@@ -517,7 +520,40 @@ int CLI::run(int argc, char **argv)
                     for (auto* mo : model.objects)
                         fff_print.auto_assign_extruders(mo);
                 }
+
+                // ATC: Adjust the configs, check values in PrintConfig.hpp
+                if (allow_layer_batching)
+                {
+                    m_print_config.option<ConfigOptionInt>("skirts")->value = 0; // Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
+                    m_print_config.option<ConfigOptionBool>("wipe_tower")->value = false; // Disable wipe tower(Print settings->Multiple extruders->Wipe tower->Enable->uncheck)
+                    m_print_config.option<ConfigOptionBool>("complete_objects")->value = true; // Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
+                    // Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
+                    for (int working_extruder_idx = 0; working_extruder_idx < fff_print.extruders().size(); working_extruder_idx++)
+                        m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // Lift Z, mm
+                }
+                //m_print_config.option<ConfigOptionFloats>("retract_lift")->values = { 4,4,4,4,4 };
                 print->apply(model, m_print_config);
+
+                
+                /*
+                if (allow_layer_batching)
+                {
+                    //std::vector<double> vect{ 10, 20, 30 };
+                    //print->full_print_config().option("bed_temperature")->serialize() = vect;
+
+                    // Adjust the configs
+                    // Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
+                    fff_print_config.skirts.value = 0;
+                    // Disable wipe tower(Print settings->Multiple extruders->Wipe tower->Enable->uncheck)
+                    fff_print_config.wipe_tower.value = false;
+                    // Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
+                    fff_print_config.complete_objects.value = true;
+                    // Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
+                    for (int working_extruder_idx = 0; working_extruder_idx < fff_print.extruders().size(); working_extruder_idx++)
+                        fff_print_config.retract_lift.values[working_extruder_idx] = 1.6; // Lift Z, mm
+                }
+                */
+
                 std::string err = print->validate();
                 if (! err.empty()) {
                     boost::nowide::cerr << err << std::endl;
@@ -530,7 +566,7 @@ int CLI::run(int argc, char **argv)
                         std::string outfile_final;
                         print->process();
                         if (printer_technology == ptFFF) {
-                            bool allow_layer_batching = true;
+                            //bool allow_layer_batching = true;
                             if (allow_layer_batching) {
                                 // Here we do the LayerRegions intersection check for layer batching
                                 print->layer_batch_labeling();

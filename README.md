@@ -41,9 +41,19 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
 - Disable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> uncheck)
 - Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
-- Extruder lift Z retraction (Printer settings -> Retraction -> Lift Z = 1.6 mm for each extruder)
+- Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
 
-### Test 3MF project
+
+### Variables
+
+- `bool **allow_layer_batching** = true; // src/PrusaSlicer.cpp
+- `double **safe_height** = 0.35; // in mm, src/libslic3r/Print.cpp
+- `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp
+- `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z
+
+
+
+### Test 3MF object
 3 colors (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height)
 
 ![intersection_test_4_8_layers_1_60mm](_images/intersection_test_4_8_layers_1_60mm.png)
@@ -69,6 +79,12 @@ Initial printing map (regulr printing):        Agglomerative tool clustering:
 {L7, R2}                                                      {L7, R2}
 ```
 ----
+
+Multicolor models to test
+- ...
+- ......
+
+
 
 ### Modified files
 
@@ -107,13 +123,10 @@ PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro
 
 ### How to build?
 
-If you want to compile the source yourself, follow the instructions on one of
-these documentation pages:
-* [Linux](doc/How%20to%20build%20-%20Linux%20et%20al.md)
-* [macOS](doc/How%20to%20build%20-%20Mac%20OS.md)
-* [Windows](doc/How%20to%20build%20-%20Windows.md)
+[Linux](doc/How%20to%20build%20-%20Linux%20et%20al.md) | [macOS](doc/How%20to%20build%20-%20Mac%20OS.md) | [Windows](doc/How%20to%20build%20-%20Windows.md)
 
-##### Windows:
+#### Windows:
+
 ***1. Install the tools***
 
 Install Visual Studio Community 2019 from visualstudio.microsoft.com/vs/. Older versions are not supported as PrusaSlicer requires support for C++17. Select all workload options for C++ and make sure to launch Visual Studio after install (to ensure that the full setup completes).
