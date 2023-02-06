@@ -2,7 +2,10 @@
 
 # PrusaSlicer: Agglomerative Tool Clustering Fork (ATC, Interlayer color clustering)
 
-![Animation](_images/eiffel_tower_animation.gif)
+| **Regular printing** | **After ATC processing**   |
+| :---:   | :---: |
+| <img width="340" src="_images/mario_regular.gif"/> | <img width="340" src="_images/mario_atc.gif"/>  |
+
 
 **The current fork only works with single-object FFF projects in the PrusaSlicer console version.**
 
@@ -38,18 +41,19 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 
 
 ### Required slicing parameters
-- Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
+- Disable skirt/brim (Print settings -> Skirt and brim -> Skirt -> Loops = 0)
 - Disable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> uncheck)
 - Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
 - Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
+- Disable support
 
 
 ### Variables
 
-- `bool **allow_layer_batching** = true; // src/PrusaSlicer.cpp
-- `double **safe_height** = 0.35; // in mm, src/libslic3r/Print.cpp
-- `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp
-- `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z
+- `bool **allow_layer_batching** = true; // src/PrusaSlicer.cpp`
+- `double **safe_height** = 0.35; // in mm, src/libslic3r/Print.cpp`
+- `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp`
+- `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z`
 
 
 
