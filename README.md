@@ -4,6 +4,7 @@
 
 | **Regular printing** | **After ATC processing**   |
 | :---:   | :---: |
+| <img width="340" src="_images/int_regular.gif"/> | <img width="340" src="_images/int_atc.gif"/>  |
 | <img width="340" src="_images/mario_regular.gif"/> | <img width="340" src="_images/mario_atc.gif"/>  |
 
 
@@ -50,44 +51,49 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 
 ### Variables
 
-- `bool **allow_layer_batching** = true; // src/PrusaSlicer.cpp`
-- `double **safe_height** = 0.35; // in mm, src/libslic3r/Print.cpp`
+- `bool allow_layer_batching = true; // src/PrusaSlicer.cpp`
+- `double safe_height = 0.35; // in mm, src/libslic3r/Print.cpp`
 - `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp`
 - `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z`
 
 
 
 ### Test 3MF object
-3 colors (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height)
+
+The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers. Below is an example of building an optimized printing map for a block consisting of three colors and seven layers (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height).
 
 ![intersection_test_4_8_layers_1_60mm](_images/intersection_test_4_8_layers_1_60mm.png)
 
 ```
 Initial printing map (regulr printing):        Agglomerative tool clustering:
-{L0, R0}                                                      {L0, R0}
-{L1, R0}                                                      {L1, R0}
-{L2, R0}                                                      {L2, R0}
-{L2, R1}                                                      {L3, R0}
-{L3, R0}                                                      {L2, R1}
-{L3, R1}                                                      {L3, R1}
-{L3, R2}                                                      {L4, R1}
-{L4, R0}                                                      {L5, R1}
-{L4, R1}                                                      {L3, R2}
-{L4, R2}                                                      {L4, R2}
-{L5, R0}                                                      {L5, R2}
-{L5, R1}                                                      {L6, R2}
-{L5, R2}                                                      {L4, R0}
-{L6, R0}                                                      {L5, R0}
-{L6, R1}                                                      {L6, R0}
-{L6, R2}                                                      {L6, R1}
-{L7, R2}                                                      {L7, R2}
+{L0, R0}                                        {L0, R0}
+{L1, R0}                                        {L1, R0}
+{L2, R0}                                        {L2, R0}
+{L2, R1}                                        {L3, R0}
+{L3, R0}                                        {L2, R1}
+{L3, R1}                                        {L3, R1}
+{L3, R2}                                        {L4, R1}
+{L4, R0}                                        {L5, R1}
+{L4, R1}                                        {L3, R2}
+{L4, R2}                                        {L4, R2}
+{L5, R0}                                        {L5, R2}
+{L5, R1}                                        {L6, R2}
+{L5, R2}                                        {L4, R0}
+{L6, R0}                                        {L5, R0}
+{L6, R1}                                        {L6, R0}
+{L6, R2}                                        {L6, R1}
+{L7, R2}                                        {L7, R2}
 ```
 ----
 
 Multicolor models to test
-- ...
-- ......
-
+- [Etta the Parrot](https://cults3d.com/en/3d-model/game/multi-color-parrot-remix-mosaicmanufacturing)
+- [Two Color World](https://cults3d.com/en/3d-model/various/multi-color-world-with-stand)
+- [Orange Coaster](https://cults3d.com/en/3d-model/home/multi-color-citrus-coaster)
+- [Dory](https://cults3d.com/en/3d-model/game/multi-color-baby-dory)
+- [Mario Keychain](https://cults3d.com/en/3d-model/game/multi-color-mario-keychain)
+- [Eiffel Tower](https://cults3d.com/en/3d-model/architecture/eiffel-tower-color-french-flag)
+- [Low Poly Squirtle](https://cults3d.com/en/3d-model/game/low-poly-squirtle-multi-and-dual-extrusion-version)
 
 
 ### Modified files
@@ -103,8 +109,10 @@ Multicolor models to test
 - src/libslic3r/GCode.hpp
 
 
-Added private members to Slic3r::Layer and Slic3r::Print objects...
+Added private members and methods to Slic3r::Layer and Slic3r::Print objects.
 
+
+<img src="_images/print_object.png"/>
 
 
 ----
