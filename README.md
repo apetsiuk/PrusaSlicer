@@ -2,6 +2,9 @@
 
 # PrusaSlicer: Agglomerative Tool Clustering Fork (ATC, Interlayer color clustering)
 
+The given fork introduces interlayer color clustering (tool aggregation) features. The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers.
+
+
 | **Regular printing** | **After ATC processing**   |
 | :---:   | :---: |
 | <img width="340" src="_images/int_regular.gif"/> | <img width="340" src="_images/int_atc.gif"/>  |
@@ -23,8 +26,6 @@ prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
 ----
 
 ### Added features
-
-The given fork introduces interlayer color clustering (tool aggregation) features.
 
 - :white_check_mark: Interlayer agglomerative tool clustering
 - :white_check_mark: Critical height tracking
@@ -60,7 +61,7 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 
 ### Test 3MF object
 
-The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers. Below is an example of building an optimized printing map for a block consisting of three colors and seven layers (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height).
+Below is an example of building an optimized printing map for a block consisting of three colors and seven layers (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height).
 
 ![intersection_test_4_8_layers_1_60mm](_images/intersection_test_4_8_layers_1_60mm.png)
 
