@@ -941,7 +941,8 @@ void Print::layer_batch_labeling() {
 
     int printing_pieces_count = printing_map_initial.get_count();
     double cum_layer_height = 0;
-    double atc_safe_height = 0.35;
+    double atc_safe_height = 0.6; // in mm
+    double atc_running_height = 0;
     int batch_new = 0;
     double region_intersection = 0;
     double critical_intersection = 3.05; // 0.05
@@ -987,6 +988,8 @@ void Print::layer_batch_labeling() {
             printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx)->state = 1;
             std::cout << "appended node {L" << current_layer_idx << ", R" << current_region_idx << "}" << std::endl;
             atc_iterator += 1;
+            atc_running_height += this->get_object(0)->layers()[current_layer_idx]->height; //in mm
+            std::cout << "===atc_running_height===" << atc_running_height << "mm" << std::endl;
         }
 
         if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx) && candidate_layer_idx < max_layers_in_object)
@@ -1007,6 +1010,7 @@ void Print::layer_batch_labeling() {
                     if (color != current_region_idx && region_intersection > critical_intersection && intersected_node_state == 0)
                     {
                         overall_intersections_below += 1;
+                        std::cout << "overall_intersections_below=" << overall_intersections_below << std::endl;
                     }
                 }
             }
@@ -1029,18 +1033,22 @@ void Print::layer_batch_labeling() {
                     }
                     if (color != current_region_idx && region_intersection <= critical_intersection && overall_intersections_below == 0)
                     {
-                        // append new node to the batched map
-                        printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, 1, batch_new); // state = 1
-                        last_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx);
                         if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx))
                         {
+                            // append new node to the batched map
+                            printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, 1, batch_new); // state = 1
+                            last_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx);
+
                             printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx)->state = 1;
                             atc_iterator += 1;
                             std::cout << "no intersections --> appending node {L" << candidate_layer_idx << ", R" << candidate_region_idx << "}" << std::endl;
+                            atc_running_height += this->get_object(0)->layers()[current_layer_idx]->height; //in mm
+                            std::cout << "===atc_running_height===" << atc_running_height << "mm" << std::endl;
                             break;
                         }
                         else
                         {
+                            std::cout << "no intersections, BUT the candidate node is not found: breaking" << std::endl;
                             last_node = NULL;
                             break;
                         }
@@ -1048,6 +1056,7 @@ void Print::layer_batch_labeling() {
                 }
                 else
                 {
+                    std::cout << "before intersection check the candidate node is not found: continuing" << std::endl;
                     last_node = NULL;
                     continue;
                 }
@@ -1056,6 +1065,15 @@ void Print::layer_batch_labeling() {
 
         if (candidate_layer_idx >= max_layers_in_object || printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx) == NULL)
         {
+            std::cout << "candidate_layer_idx >= max_layers_in_object OR printing node==NULL: continuing" << std::endl;
+            last_node = NULL;
+            continue;
+        }
+
+        if (atc_running_height >= atc_safe_height)
+        {
+            atc_running_height = 0;
+            std::cout << "detected critical height: continuing" << std::endl;
             last_node = NULL;
             continue;
         }
