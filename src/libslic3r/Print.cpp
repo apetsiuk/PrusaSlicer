@@ -941,16 +941,16 @@ void Print::layer_batch_labeling() {
 
     int printing_pieces_count = printing_map_initial.get_count();
     double cum_layer_height = 0;
-    double safe_height = 0.35;
+    double atc_safe_height = 0.35;
     int batch_new = 0;
     double region_intersection = 0;
-    double critical_intersection = 0.05;
+    double critical_intersection = 3.05; // 0.05
 
     int number_of_colors = this->get_object(0)->all_regions().size();
 
     int max_layers_in_object = this->get_object(0)->layers().size();
-    int ap_iterator = 0;
-    int ap_step = 0;
+    int atc_iterator = 0;
+    int atc_step = 0;
     int intersected_node_state;
     int intersected_region;
     struct ATC_printing_piece* node;
@@ -963,7 +963,7 @@ void Print::layer_batch_labeling() {
     std::cout << "*********************************************" << std::endl;
     while (printing_map_batched.get_count() <= printing_map_initial.get_count() - 1)
     {
-        ap_step += 1;
+        atc_step += 1;
         // get the first node in the list with zero-state (which is not done)
         if (last_node != NULL)
             node = last_node;
@@ -975,7 +975,7 @@ void Print::layer_batch_labeling() {
         candidate_layer_idx = node->layer + 1;
         candidate_region_idx = node->region; // the same region
 
-        std::cout << "--STEP-- " << ap_step << ", PROCESSED NODES=" << ap_iterator << std::endl;
+        std::cout << "--STEP-- " << atc_step << ", PROCESSED NODES=" << atc_iterator << std::endl;
         std::cout << "got node {L" << current_layer_idx << ", R" << current_region_idx << "}" << " -- candidate {Lc" << candidate_layer_idx << ", Rc" << candidate_region_idx << "}" << std::endl;
 
 
@@ -986,7 +986,7 @@ void Print::layer_batch_labeling() {
             last_node = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx);
             printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx)->state = 1;
             std::cout << "appended node {L" << current_layer_idx << ", R" << current_region_idx << "}" << std::endl;
-            ap_iterator += 1;
+            atc_iterator += 1;
         }
 
         if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx) && candidate_layer_idx < max_layers_in_object)
@@ -1035,7 +1035,7 @@ void Print::layer_batch_labeling() {
                         if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx))
                         {
                             printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx)->state = 1;
-                            ap_iterator += 1;
+                            atc_iterator += 1;
                             std::cout << "no intersections --> appending node {L" << candidate_layer_idx << ", R" << candidate_region_idx << "}" << std::endl;
                             break;
                         }
