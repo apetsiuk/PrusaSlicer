@@ -1,3 +1,6 @@
+
+[wiki](https://github.com/apetsiuk/PrusaSlicer/wiki)
+
 <img align="left" width="240" alt="logo" src="_images/PrusaSlicer_batched3.png"/>
 
 # PrusaSlicer: Agglomerative Tool Clustering Fork (ATC, Interlayer color clustering)

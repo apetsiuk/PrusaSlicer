@@ -945,7 +945,9 @@ void Print::layer_batch_labeling() {
     double atc_running_height = 0;
     int batch_new = 0;
     double region_intersection = 0;
-    double critical_intersection = 3.05; // 0.05
+    double critical_intersection = 10.05; // 0.05
+
+    //this->config().bed_temperature;
 
     int number_of_colors = this->get_object(0)->all_regions().size();
 

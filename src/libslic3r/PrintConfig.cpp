@@ -383,6 +383,20 @@ void PrintConfigDef::init_fff_params()
     // Maximum extruder temperature, bumped to 1500 to support printing of glass.
     const int max_temp = 1500;
 
+    //----- ATC Tool Clustering -----------------------------------------------------
+    // enable ATC tool clustering: bool checkbox
+    def = this->add("atc_enable_tool_clustering", coBool);
+    def->label = L("Enable tool clustering");
+    //def->category = L("Layer batching");
+    def->tooltip = L("This feature will enable the experimental ATC color layer batching algorithm.");
+
+    //def->min = 0;
+    //def->max = 100;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionBool(true));
+    //----------------------------------------------------------------
+
+
     def = this->add("avoid_crossing_perimeters", coBool);
     def->label = L("Avoid crossing perimeters");
     def->tooltip = L("Optimize travel moves in order to minimize the crossing of perimeters. "
