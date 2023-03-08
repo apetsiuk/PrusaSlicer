@@ -941,11 +941,13 @@ void Print::layer_batch_labeling() {
 
     int printing_pieces_count = printing_map_initial.get_count();
     double cum_layer_height = 0;
-    double atc_safe_height = 0.6; // in mm
+    ;
+
+    double atc_safe_height = this->m_objects[0]->m_config.atc_safe_batch_height.value; // 0.4 default value in mm
     double atc_running_height = 0;
     int batch_new = 0;
     double region_intersection = 0;
-    double critical_intersection = 10.05; // 0.05
+    double critical_intersection = this->m_objects[0]->m_config.atc_critical_intersection_area; // 0.5
 
     //this->config().bed_temperature;
 

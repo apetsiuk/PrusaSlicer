@@ -2214,6 +2214,7 @@ void GCode::process_sequential_batched_layers(
     ATC_printing_map.display(ATC_printing_map.gethead());
 
     struct ATC_printing_piece* printing_piece;
+    int atc_current_tool = 0;
     for (int print_step = 0; print_step < ATC_printing_map.get_count(); print_step++)
     {
         printing_piece = ATC_printing_map.get_node(print_step);
@@ -2224,6 +2225,17 @@ void GCode::process_sequential_batched_layers(
         GCode::LayerToPrint& layer = layers_to_print[print_layer_idx];
         printing_piece_gcode = this->process_layer_batched_region(print, { std::move(layer) },
             tool_ordering.tools_for_layer(layer.print_z()), &layer == &layers_to_print.back(), nullptr, print_region_idx, single_object_idx);
+
+        if (print_region_idx != atc_current_tool)
+        {
+            atc_current_tool = print_region_idx;
+            printing_piece_gcode.gcode += "; --- ATC Tool Change ---\n";
+            printing_piece_gcode.gcode += "T" + std::to_string(atc_current_tool) + "\n";
+            printing_piece_gcode.gcode += "M104 S215; set temperature\n";
+            printing_piece_gcode.gcode += "M900 K0.05; Filament gcode LA 1.5\n";
+            printing_piece_gcode.gcode += "M900 K30; Filament gcode LA 1.0\n";
+        }
+
         output_stream.write(printing_piece_gcode.gcode);
     }
 
@@ -3001,9 +3013,9 @@ GCode::LayerResult GCode::process_layer(
     // Extrude the skirt, brim, support, perimeters, infill ordered by the extruders.
     for (unsigned int extruder_id : layer_tools.extruders)
     {
-        gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ?
-            m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) :
-            this->set_extruder(extruder_id, print_z);
+        // ATC fork: We implemented the TC gcode above in this function
+        // search "if (print_region_idx != atc_current_tool){...}"
+        //gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) :  this->set_extruder(extruder_id, print_z);
 
         // let analyzer tag generator aware of a role type change
         if (layer_tools.has_wipe_tower && m_wipe_tower)

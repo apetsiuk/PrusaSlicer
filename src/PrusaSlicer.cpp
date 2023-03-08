@@ -522,8 +522,16 @@ int CLI::run(int argc, char **argv)
                 }
 
                 // ATC: Adjust the configs, check values in PrintConfig.hpp
-                if (allow_layer_batching)
+                // allow_layer_batching = true
+                if (m_print_config.option<ConfigOptionBool>("atc_enable_tool_clustering")->value == true)
                 {
+                    std::cout << "if (allow_layer_batching)\n\n\n\n\n" << std::endl;
+                    std::cout << "m_print_config.option<ConfigOptionBool>(\"atc_enable_tool_clustering\")->value = " << m_print_config.option<ConfigOptionBool>("atc_enable_tool_clustering")->value << std::endl;
+                    std::cout << "m_print_config.option<ConfigOptionFloat>(\"atc_safe_batch_height\")->value = " << m_print_config.option<ConfigOptionFloat>("atc_safe_batch_height")->value << std::endl;
+                    std::cout << "m_print_config.option<ConfigOptionFloat>(\"atc_critical_intersection_area\")->value = " << m_print_config.option<ConfigOptionFloat>("atc_critical_intersection_area")->value << std::endl;
+                    std::cout << "m_print_config.option<ConfigOptionFloat>(\"atc_extruders_z_jump\")->value = " << m_print_config.option<ConfigOptionFloat>("atc_extruders_z_jump")->value << std::endl;
+                    std::cout << "if (allow_layer_batching)\n\n\n\n\n" << std::endl;
+
                     m_print_config.option<ConfigOptionInt>("skirts")->value = 0; // Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
                     m_print_config.option<ConfigOptionBool>("wipe_tower")->value = false; // Disable wipe tower(Print settings->Multiple extruders->Wipe tower->Enable->uncheck)
                     m_print_config.option<ConfigOptionBool>("complete_objects")->value = true; // Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
@@ -534,25 +542,6 @@ int CLI::run(int argc, char **argv)
                 //m_print_config.option<ConfigOptionFloats>("retract_lift")->values = { 4,4,4,4,4 };
                 print->apply(model, m_print_config);
 
-                
-                /*
-                if (allow_layer_batching)
-                {
-                    //std::vector<double> vect{ 10, 20, 30 };
-                    //print->full_print_config().option("bed_temperature")->serialize() = vect;
-
-                    // Adjust the configs
-                    // Disable skirt/brim ((Print settings -> Skirt and brim -> Skirt -> Loops = 0)
-                    fff_print_config.skirts.value = 0;
-                    // Disable wipe tower(Print settings->Multiple extruders->Wipe tower->Enable->uncheck)
-                    fff_print_config.wipe_tower.value = false;
-                    // Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
-                    fff_print_config.complete_objects.value = true;
-                    // Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
-                    for (int working_extruder_idx = 0; working_extruder_idx < fff_print.extruders().size(); working_extruder_idx++)
-                        fff_print_config.retract_lift.values[working_extruder_idx] = 1.6; // Lift Z, mm
-                }
-                */
 
                 std::string err = print->validate();
                 if (! err.empty()) {
@@ -567,7 +556,7 @@ int CLI::run(int argc, char **argv)
                         print->process();
                         if (printer_technology == ptFFF) {
                             //bool allow_layer_batching = true;
-                            if (allow_layer_batching) {
+                            if (m_print_config.option<ConfigOptionBool>("atc_enable_tool_clustering")->value == true) {
                                 // Here we do the LayerRegions intersection check for layer batching
                                 print->layer_batch_labeling();
                                 std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
