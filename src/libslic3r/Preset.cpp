@@ -427,6 +427,7 @@ static std::vector<std::string> s_Preset_print_options {
     "ironing", "ironing_type", "ironing_flowrate", "ironing_speed", "ironing_spacing",
     "max_print_speed", "max_volumetric_speed", "avoid_crossing_perimeters_max_detour",
     "fuzzy_skin", "fuzzy_skin_thickness", "fuzzy_skin_point_dist", "atc_enable_tool_clustering",
+    "atc_safe_batch_height", "atc_critical_intersection_area", "atc_extruders_z_jump",
 #ifdef HAS_PRESSURE_EQUALIZER
     "max_volumetric_extrusion_rate_slope_positive", "max_volumetric_extrusion_rate_slope_negative",
 #endif /* HAS_PRESSURE_EQUALIZER */

@@ -33,13 +33,13 @@ prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
 - :white_check_mark: Interlayer agglomerative tool clustering
 - :white_check_mark: Critical height tracking
 - :white_check_mark: Adjustable level of intersections between neighboring regions
+- :white_check_mark: Integrate control elements to visual GUI
 
 
 ### Features under development
 - :x: Wipe tower generation for new g-code version
 - :x: Support clustering along with sliced layers
 - :x: Generate updated print statistics
-- :x: Integrate control elements to visual GUI
 - :x: Visualize processed g-code in GUI window
 - :x: Implement slide bar for clustered g-code regions in GUI
 

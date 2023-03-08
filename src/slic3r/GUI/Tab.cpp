@@ -1461,11 +1461,12 @@ void TabPrint::build()
     page = add_options_page(L("Tool Clustering"), "atc_tool_clustering");
         optgroup = page->new_optgroup(L("General parameters (experimental)"));
         optgroup->append_single_option_line("atc_enable_tool_clustering");
+        optgroup->append_single_option_line("atc_safe_batch_height");
         //optgroup->append_single_option_line("fill_density");
-        //optgroup->append_single_option_line("fill_pattern");
+
         optgroup = page->new_optgroup(L("Color intersection (experimental)"));
-        optgroup->append_single_option_line("fill_angle");
-        optgroup->append_single_option_line("atc_enable_tool_clustering");
+        optgroup->append_single_option_line("atc_critical_intersection_area");
+        optgroup->append_single_option_line("atc_extruders_z_jump");
     // ---------------------------
 
     page = add_options_page(L("Infill"), "infill");

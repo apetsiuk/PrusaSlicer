@@ -389,11 +389,39 @@ void PrintConfigDef::init_fff_params()
     def->label = L("Enable tool clustering");
     //def->category = L("Layer batching");
     def->tooltip = L("This feature will enable the experimental ATC color layer batching algorithm.");
-
-    //def->min = 0;
-    //def->max = 100;
-    def->mode = comExpert;
+    def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionBool(true));
+
+    // batch height: input float field in mm
+    def = this->add("atc_safe_batch_height", coFloat);
+    def->label = L("Safe batch height");
+    def->tooltip = L("Enter your experimental safe batch height in mm.");
+    def->sidetext = L("mm");
+    def->min = 0.1;
+    def->max = 10;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat{ 0.4 });
+
+    // intersection coefficient: input float field in mm^2
+    def = this->add("atc_critical_intersection_area", coFloat);
+    def->label = L("Max color intersection area");
+    def->tooltip = L("Enter your experimentsl max intersection coefficient.");
+    def->sidetext = L("mm²");
+    def->min = 0.1;
+    def->max = 100;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionFloat{ 0.5 });
+
+    // Lift Z for each extruder
+    def = this->add("atc_extruders_z_jump", coFloat);
+    def->label = L("Inter-region Z-lift for each extruder");
+    def->tooltip = L("Interregion Z-lift for each extruder in mm.");
+    def->sidetext = L("mm");
+    def->min = 0.1;
+    def->max = 10;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionFloat{ 1.6 });
+
     //----------------------------------------------------------------
 
 
