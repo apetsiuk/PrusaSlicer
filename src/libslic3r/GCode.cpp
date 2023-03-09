@@ -2215,6 +2215,7 @@ void GCode::process_sequential_batched_layers(
 
     struct ATC_printing_piece* printing_piece;
     int atc_current_tool = 0;
+    int atc_statistics_number_of_TC = 0;
     for (int print_step = 0; print_step < ATC_printing_map.get_count(); print_step++)
     {
         printing_piece = ATC_printing_map.get_node(print_step);
@@ -2229,6 +2230,7 @@ void GCode::process_sequential_batched_layers(
         if (print_region_idx != atc_current_tool)
         {
             atc_current_tool = print_region_idx;
+            atc_statistics_number_of_TC += 1;
             printing_piece_gcode.gcode += "; --- ATC Tool Change ---\n";
             printing_piece_gcode.gcode += "T" + std::to_string(atc_current_tool) + "\n";
             printing_piece_gcode.gcode += "M104 S215; set temperature\n";
@@ -2238,6 +2240,7 @@ void GCode::process_sequential_batched_layers(
 
         output_stream.write(printing_piece_gcode.gcode);
     }
+    std::cout << "\n\n\n\n\n\n\n\n atc_statistics_number_of_TC:" + std::to_string(atc_statistics_number_of_TC) + "\n\n\n\n\n\n" << std::endl;
 
 
 
@@ -3013,9 +3016,7 @@ GCode::LayerResult GCode::process_layer(
     // Extrude the skirt, brim, support, perimeters, infill ordered by the extruders.
     for (unsigned int extruder_id : layer_tools.extruders)
     {
-        // ATC fork: We implemented the TC gcode above in this function
-        // search "if (print_region_idx != atc_current_tool){...}"
-        //gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) :  this->set_extruder(extruder_id, print_z);
+        gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) :  this->set_extruder(extruder_id, print_z);
 
         // let analyzer tag generator aware of a role type change
         if (layer_tools.has_wipe_tower && m_wipe_tower)
@@ -3453,9 +3454,9 @@ GCode::LayerResult GCode::process_layer_batched_region(
     // Extrude the skirt, brim, support, perimeters, infill ordered by the extruders.
     for (unsigned int extruder_id : layer_tools.extruders)
     {
-        gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ?
-            m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) :
-            this->set_extruder(extruder_id, print_z);
+        // ATC fork: We implemented the TC gcode above in this function
+        // search "if (print_region_idx != atc_current_tool){...}"
+        //gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) : this->set_extruder(extruder_id, print_z);
 
         // let analyzer tag generator aware of a role type change
         if (layer_tools.has_wipe_tower && m_wipe_tower)
