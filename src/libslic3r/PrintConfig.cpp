@@ -422,6 +422,13 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat{ 1.6 });
 
+    // enable ATC wipe tower: bool checkbox
+    def = this->add("atc_enable_wipe_tower", coBool);
+    def->label = L("Enable ATC wipe tower");
+    def->tooltip = L("This feature will enable the experimental ATC wipe tower generation.");
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionBool(false));
+
     //----------------------------------------------------------------
 
 

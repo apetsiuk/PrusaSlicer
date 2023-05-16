@@ -1859,6 +1859,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
 
     // Do all objects for each layer.
     if (print.config().complete_objects.value) {
+        std::cout << "~~~~~~~~~~~ Do all objects for each layer ~~~~~~~~~~~" << std::endl;
         size_t finished_objects = 0;
         const PrintObject* prev_object = (*print_object_instance_sequential_active)->print_object;
         for (; print_object_instance_sequential_active != print_object_instances_ordering.end(); ++print_object_instance_sequential_active) {
@@ -1901,6 +1902,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
             // Process all layers of a single object instance (sequential mode) with a parallel pipeline:
             // Generate G-code, run the filters (vase mode, cooling buffer), run the G-code analyser
             // and export G-code into file.
+            std::cout << "~~~~~~~~~~~ process_sequential_batched_layers ~~~~~~~~~~~" << std::endl;
             this->process_sequential_batched_layers(print, tool_ordering, collect_layers_to_print(object), *print_object_instance_sequential_active - object.instances().data(), file);
 #ifdef HAS_PRESSURE_EQUALIZER
             if (m_pressure_equalizer)
@@ -1914,6 +1916,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
         }
     }
     else {
+        std::cout << "~~~~~~~~~~~ Sort layers by Z ~~~~~~~~~~~" << std::endl;
         // Sort layers by Z.
         // All extrusion moves with the same top layer height are extruded uninterrupted.
         std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>> layers_to_print = collect_layers_to_print(print);
@@ -1966,6 +1969,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
         // Generate G-code, run the filters (vase mode, cooling buffer), run the G-code analyser
         // and export G-code into file.
         this->process_layers(print, tool_ordering, print_object_instances_ordering, layers_to_print, file);
+        
 #ifdef HAS_PRESSURE_EQUALIZER
         if (m_pressure_equalizer)
             file.write(m_pressure_equalizer->process("", true));
@@ -2227,6 +2231,7 @@ void GCode::process_sequential_batched_layers(
         printing_piece_gcode = this->process_layer_batched_region(print, { std::move(layer) },
             tool_ordering.tools_for_layer(layer.print_z()), &layer == &layers_to_print.back(), nullptr, print_region_idx, single_object_idx);
 
+        /*
         if (print_region_idx != atc_current_tool)
         {
             atc_current_tool = print_region_idx;
@@ -2237,6 +2242,7 @@ void GCode::process_sequential_batched_layers(
             printing_piece_gcode.gcode += "M900 K0.05; Filament gcode LA 1.5\n";
             printing_piece_gcode.gcode += "M900 K30; Filament gcode LA 1.0\n";
         }
+        */
 
         output_stream.write(printing_piece_gcode.gcode);
     }
@@ -3456,7 +3462,7 @@ GCode::LayerResult GCode::process_layer_batched_region(
     {
         // ATC fork: We implemented the TC gcode above in this function
         // search "if (print_region_idx != atc_current_tool){...}"
-        //gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) : this->set_extruder(extruder_id, print_z);
+        gcode += (layer_tools.has_wipe_tower && m_wipe_tower) ? m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) : this->set_extruder(extruder_id, print_z);
 
         // let analyzer tag generator aware of a role type change
         if (layer_tools.has_wipe_tower && m_wipe_tower)

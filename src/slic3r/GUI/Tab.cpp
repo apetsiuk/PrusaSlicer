@@ -1458,7 +1458,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("fuzzy_skin_point_dist", category_path + "fuzzy-skin-point-distance");
 
     // ATC Tool clustering
-    page = add_options_page(L("Tool Clustering"), "atc_tool_clustering");
+    page = add_options_page(L("ATC tool clustering"), "atc_tool_clustering");
         optgroup = page->new_optgroup(L("General parameters (experimental)"));
         optgroup->append_single_option_line("atc_enable_tool_clustering");
         optgroup->append_single_option_line("atc_safe_batch_height");
@@ -1467,6 +1467,9 @@ void TabPrint::build()
         optgroup = page->new_optgroup(L("Color intersection (experimental)"));
         optgroup->append_single_option_line("atc_critical_intersection_area");
         optgroup->append_single_option_line("atc_extruders_z_jump");
+
+        optgroup = page->new_optgroup(L("ATC wipe tower (experimental)"));
+        optgroup->append_single_option_line("atc_enable_wipe_tower");
     // ---------------------------
 
     page = add_options_page(L("Infill"), "infill");

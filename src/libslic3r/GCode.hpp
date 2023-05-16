@@ -278,6 +278,7 @@ private:
         const std::vector<const PrintInstance*>                             &print_object_instances_ordering,
         const std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>>   &layers_to_print,
         GCodeOutputStream                                                   &output_stream);
+
     // Process all layers of a single object instance (sequential mode) with a parallel pipeline:
     // Generate G-code, run the filters (vase mode, cooling buffer), run the G-code analyser
     // and export G-code into file.

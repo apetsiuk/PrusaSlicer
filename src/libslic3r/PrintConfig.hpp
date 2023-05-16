@@ -477,6 +477,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     PrintObjectConfig,
 
     ((ConfigOptionBool,                atc_enable_tool_clustering))
+    ((ConfigOptionBool,                atc_enable_wipe_tower))
     ((ConfigOptionFloat,               atc_safe_batch_height))
     ((ConfigOptionFloat,               atc_critical_intersection_area))
     ((ConfigOptionFloat,               atc_extruders_z_jump))
