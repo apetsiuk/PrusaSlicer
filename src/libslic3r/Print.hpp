@@ -857,6 +857,7 @@ public:
 
     const PrintStatistics&      print_statistics() const { return m_print_statistics; }
     ATC_linked_list             get_ATC_printing_map() { return m_ATC_printing_map; }
+    void                        ATC_plan_wipe_toolchange();
 
     // Wipe tower support.
     bool                        has_wipe_tower() const;
@@ -913,7 +914,10 @@ private:
     // Estimated print time, filament consumed.
     PrintStatistics                         m_print_statistics;
 
+    // ATC
     ATC_linked_list                         m_ATC_printing_map;
+    ToolOrdering 							m_ATC_tool_ordering;
+    WipeTowerData                           m_ATC_wipe_tower_data{ m_ATC_tool_ordering };
 
     // To allow GCode to set the Print's GCodeExport step status.
     friend class GCode;

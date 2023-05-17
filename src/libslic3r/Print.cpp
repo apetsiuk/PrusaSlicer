@@ -1210,6 +1210,80 @@ void Print::layer_batch_labeling() {
 
 }
 
+
+
+void Print::ATC_plan_wipe_toolchange() {
+    std::cout << "\n\n\nvoid Print::ATC_plan_wipe_toolchange()\n\n\n" << std::endl;
+
+    // create atc_wipe_tower
+    std::vector<float> wiping_matrix(cast<float>(m_config.wiping_volumes_matrix.values));
+    std::vector<std::vector<float>> wipe_volumes;
+    const unsigned int number_of_extruders = (unsigned int)(sqrt(wiping_matrix.size()) + EPSILON);
+    for (unsigned int i = 0; i < number_of_extruders; ++i)
+        wipe_volumes.push_back(std::vector<float>(wiping_matrix.begin() + i * number_of_extruders, wiping_matrix.begin() + (i + 1) * number_of_extruders));
+
+    m_ATC_wipe_tower_data.tool_ordering = ToolOrdering(*this, (unsigned int)-1, true);
+
+    WipeTower atc_wipe_tower(m_config, wipe_volumes, m_ATC_wipe_tower_data.tool_ordering.first_extruder());
+    for (size_t i = 0; i < number_of_extruders; ++i)
+        atc_wipe_tower.set_extruder(i, m_config);
+
+
+    // wiping parameters
+    float atc_wiping_volume = 140.0;
+    size_t atc_old_tool;
+    size_t atc_new_tool;
+    float atc_wiping_layer_height = 0.2;
+    size_t atc_wipe_tower_idx = 0;
+    float atc_print_z;
+    
+
+    // building wiping tool changes
+    m_ATC_wipe_tower_data.clear();
+    // iterate over the printing pieces
+    struct ATC_printing_piece* printing_node;
+    int prev_region_idx = 0;
+    for (int printing_node_idx = 0; printing_node_idx < m_ATC_printing_map.get_count(); printing_node_idx++)
+    {
+        printing_node = m_ATC_printing_map.get_node(printing_node_idx);
+        int print_layer_idx = printing_node->layer;
+        int print_region_idx = printing_node->region;
+
+        std::cout << "piece=" << printing_node_idx << " layer=" << print_layer_idx << " region=" << print_region_idx << std::endl;
+
+        if (print_region_idx != prev_region_idx)
+        {
+            std::cout << "wipe tower here" << std::endl;
+            atc_wipe_tower_idx += 1;
+            atc_old_tool = prev_region_idx;
+            atc_new_tool = print_region_idx;
+            atc_print_z = atc_wiping_layer_height * atc_wipe_tower_idx;
+
+            atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
+            std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+        }
+        prev_region_idx = print_region_idx;
+    }
+
+    m_ATC_wipe_tower_data.tool_changes.reserve(atc_wipe_tower_idx + 1);
+    atc_wipe_tower.generate(m_ATC_wipe_tower_data.tool_changes);
+    std::cout << "\n\n\ncheck size = " << m_ATC_wipe_tower_data.tool_changes.size() << std::endl;
+
+    
+    /*
+    atc_wipe_tower.plan_toolchange(0.2, 0.2, 0, 1, 140.0); //00
+    atc_wipe_tower.plan_toolchange(0.4, 0.2, 1, 2, 70.0);  //10
+    atc_wipe_tower.plan_toolchange(0.6, 0.2, 2, 0, 140.0); //20
+    atc_wipe_tower.plan_toolchange(0.8, 0.2, 0, 0, 0); //30
+    atc_wipe_tower.plan_toolchange(1.0, 0.2, 0, 1, 140.0); //40
+    atc_wipe_tower.plan_toolchange(1.2, 0.2, 1, 2, 140.0); //50
+    atc_wipe_tower.plan_toolchange(1.4, 0.2, 2, 0, 140.0); //60
+    atc_wipe_tower.plan_toolchange(1.6, 0.2, 0, 2, 140.0); //70
+    */
+}
+
+
+
 // G-code export process, running at a background thread.
 // The export_gcode may die for various reasons (fails to process output_filename_format,
 // write error into the G-code, cannot execute post-processing scripts).

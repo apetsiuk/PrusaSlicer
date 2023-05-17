@@ -555,6 +555,7 @@ int CLI::run(int argc, char **argv)
                     try {
                         std::string outfile_final;
                         print->process();
+                        // prusa-slicer-console --export-gcode --output out.gcode brick__test.3mf
                         if (printer_technology == ptFFF) {
                             //bool allow_layer_batching = true;
                             if (m_print_config.option<ConfigOptionBool>("atc_enable_tool_clustering")->value == true) {
@@ -563,6 +564,16 @@ int CLI::run(int argc, char **argv)
                                 std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                                 fff_print.get_ATC_printing_map().display(fff_print.get_ATC_printing_map().gethead());
                                 std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+
+                                if (m_print_config.option<ConfigOptionBool>("atc_enable_wipe_tower")->value == true) {
+                                    std::cout << "\n\n--- Generating ATC Wipe Tower ---\n\n" << std::endl;
+
+                                    fff_print.ATC_plan_wipe_toolchange();
+                                }
+
+                                
+
+
                                 outfile = fff_print.export_batched_gcode(outfile, nullptr, nullptr);
                                 outfile_final = fff_print.print_statistics().finalize_output_path(outfile);
                             }
