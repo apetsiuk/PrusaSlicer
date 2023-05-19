@@ -517,9 +517,10 @@ class ConstPrintRegionPtrsAdaptor : public ConstVectorOfPtrsAdaptor<PrintRegion>
 // ATC - Agglomerative Tool Clustering
 
 struct ATC_printing_piece {
-    int layer;
-    int region;
+    size_t layer;
+    size_t region;
     bool state;
+    bool need_wipe;
     int batch;
     ATC_printing_piece* next;
 };
@@ -536,11 +537,12 @@ public:
         tail = NULL;
     }
 
-    void append_node(int layer, int region, bool state, int batch)
+    void append_node(size_t layer, size_t region, bool need_wipe, bool state, int batch)
     {
         ATC_printing_piece* tmp = new ATC_printing_piece;
         tmp->layer = layer;
         tmp->region = region;
+        tmp->need_wipe = need_wipe;
         tmp->state = state;
         tmp->batch = batch;
         tmp->next = NULL;
@@ -575,7 +577,7 @@ public:
         }
     }
 
-    void front(int layer, int region, bool state, int batch)
+    void front(size_t layer, size_t region, bool state, int batch)
     {
         ATC_printing_piece* tmp = new ATC_printing_piece;
         tmp->layer = layer;
@@ -586,59 +588,59 @@ public:
         head = tmp;
     }
 
-    std::pair<int, int> get_layer_and_region_ids(int position)
+    std::pair<size_t, size_t> get_layer_and_region_ids(size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }
-        int layer_id = temp->layer;
-        int region_id = temp->region;
+        size_t layer_id = temp->layer;
+        size_t region_id = temp->region;
         return std::make_pair(layer_id, region_id);
     }
 
 
-    int get_layer_id(ATC_printing_piece* head, int position)
+    size_t get_layer_id(ATC_printing_piece* head, size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }
-        int layer_id = temp->layer;
+        size_t layer_id = temp->layer;
         return layer_id;
     }
 
-    bool get_state(ATC_printing_piece* head, int position)
+    bool get_state(ATC_printing_piece* head, size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }
-        int state = temp->state;
+        bool state = temp->state;
         return state;
     }
 
-    int get_region_id(ATC_printing_piece* head, int position)
+    int get_region_id(ATC_printing_piece* head, size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }
-        int region_id = temp->region;
+        size_t region_id = temp->region;
         return region_id;
     }
 
     int get_count()
     {
-        int number_of_nodes = 0;
+        size_t number_of_nodes = 0;
         ATC_printing_piece* current = head;
         while (current != NULL)
         {
@@ -649,7 +651,7 @@ public:
         return number_of_nodes;
     }
 
-    void delete_node(int position)
+    void delete_node(size_t position)
     {
         ATC_printing_piece* temp;
         ATC_printing_piece* prev;
@@ -665,7 +667,7 @@ public:
         {
             temp = head;
             prev = NULL;
-            for (int i = 0; i < position - 1 && temp; i++)
+            for (size_t i = 0; i < position - 1 && temp; i++)
             {
                 prev = temp;
                 temp = temp->next;
@@ -678,7 +680,7 @@ public:
         }
     }
 
-    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int layer, int region)
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, size_t layer, size_t region)
     {
         if (p == NULL)
             return NULL;
@@ -690,7 +692,7 @@ public:
         return node_search(p->next, layer, region);
     }
 
-    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, int state)
+    struct ATC_printing_piece* node_search(struct ATC_printing_piece* p, bool state)
     {
         if (p == NULL)
             return NULL;
@@ -701,20 +703,20 @@ public:
         return node_search(p->next, state);
     }
 
-    struct ATC_printing_piece* get_node(int position)
+    struct ATC_printing_piece* get_node(size_t position)
     {
         ATC_printing_piece* node;
         node = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             node = node->next;
         }
         return node;
     }
 
-    int find_printing_piece_position(struct ATC_printing_piece* p, struct ATC_printing_piece* first, int layer, int region)
+    size_t find_printing_piece_position(struct ATC_printing_piece* p, struct ATC_printing_piece* first, size_t layer, size_t region)
     {
-        int pos = 0;
+        size_t pos = 0;
         ATC_printing_piece* q;
         while (p != NULL)
         {
@@ -732,22 +734,22 @@ public:
         return -1;
     }
 
-    void state_done(int position)
+    void state_done(size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }
         temp->state = 1;
     }
 
-    bool check_state(int position)
+    bool check_state(size_t position)
     {
         ATC_printing_piece* temp;
         temp = head;
-        for (int node_position = 0; node_position < position; node_position++)
+        for (size_t node_position = 0; node_position < position; node_position++)
         {
             temp = temp->next;
         }

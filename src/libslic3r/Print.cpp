@@ -907,6 +907,7 @@ double ATC_check_region_intersection(LayerRegion& upper, LayerRegion& lower)
 
 void Print::layer_batch_labeling() {
     std::cout << "-- layer_batch_labeling() --" << std::endl;
+    bool need_wipe = 0;
 
     ATC_linked_list printing_map_initial, printing_map_batched;
 
@@ -916,7 +917,7 @@ void Print::layer_batch_labeling() {
         {
             if (this->get_object(0)->layers()[L]->regions()[R]->slices.surfaces.size() != 0)
             {
-                printing_map_initial.append_node(L, R, 0, 0); // layer, region, state, batch
+                printing_map_initial.append_node(L, R, need_wipe, 0, 0); // layer, region, need_wipe, state, batch
             }
         }
     }
@@ -987,7 +988,7 @@ void Print::layer_batch_labeling() {
 
         if (node->state == 0)
         {
-            printing_map_batched.append_node(current_layer_idx, current_region_idx, 1, batch_new); // state = 1
+            printing_map_batched.append_node(current_layer_idx, current_region_idx, need_wipe, 1, batch_new); // state = 1
             last_node = printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx);
             printing_map_initial.node_search(printing_map_initial.gethead(), current_layer_idx, current_region_idx)->state = 1;
             std::cout << "appended node {L" << current_layer_idx << ", R" << current_region_idx << "}" << std::endl;
@@ -1040,7 +1041,7 @@ void Print::layer_batch_labeling() {
                         if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx))
                         {
                             // append new node to the batched map
-                            printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, 1, batch_new); // state = 1
+                            printing_map_batched.append_node(candidate_layer_idx, candidate_region_idx, need_wipe, 1, batch_new); // state = 1
                             last_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx);
 
                             printing_map_initial.node_search(printing_map_initial.gethead(), candidate_layer_idx, candidate_region_idx)->state = 1;
@@ -1230,6 +1231,7 @@ void Print::ATC_plan_wipe_toolchange() {
 
 
     // wiping parameters
+    bool need_wipe = true;
     float atc_wiping_volume = 140.0;
     size_t atc_old_tool;
     size_t atc_new_tool;
@@ -1258,11 +1260,15 @@ void Print::ATC_plan_wipe_toolchange() {
             atc_old_tool = prev_region_idx;
             atc_new_tool = print_region_idx;
             atc_print_z = atc_wiping_layer_height * atc_wipe_tower_idx;
+            printing_node->need_wipe = true;
 
             atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
             std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
         }
         prev_region_idx = print_region_idx;
+        std::cout << "\n===================================\n\n\n" << std::endl;
+        std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
+        std::cout << "\n\n\n===================================\n" << std::endl;
     }
 
     m_ATC_wipe_tower_data.tool_changes.reserve(atc_wipe_tower_idx + 1);

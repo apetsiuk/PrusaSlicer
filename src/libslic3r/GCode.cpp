@@ -2239,12 +2239,13 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 
     struct ATC_printing_piece* printing_node;
 
-    for (int printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
+    for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
     {
         printing_node = print.m_ATC_printing_map.get_node(printing_node_idx);
-        int print_layer_idx = printing_node->layer;
-        int print_region_idx = printing_node->region;
+        size_t print_layer_idx = printing_node->layer;
+        size_t print_region_idx = printing_node->region;
         unsigned int current_extruder_idx = print_region_idx;
+        unsigned int atc_wiping_layer_idx = 0;
 
         GCode::LayerResult my_atc_piece_result;
         GCode::LayerToPrint& layer_to_print = layers_to_print[print_layer_idx];
@@ -2554,7 +2555,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 
         if (printing_node_idx == 3)
         {
-            output_stream.write(m_wipe_tower->append_tcr(*this, print.m_ATC_wipe_tower_data.tool_changes[0][0], 1, 0.2));
+            output_stream.write(m_wipe_tower->append_tcr(*this, print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0], 1, 0.2));
+            atc_wiping_layer_idx += 1;
         }
         
 
