@@ -87,8 +87,9 @@ public:
 
 private:
     WipeTowerIntegration& operator=(const WipeTowerIntegration&);
+public:
     std::string append_tcr(GCode &gcodegen, const WipeTower::ToolChangeResult &tcr, int new_extruder_id, double z = -1.) const;
-
+private:
     // Postprocesses gcode: rotates and moves G1 extrusions and returns result
     std::string post_process_wipe_tower_moves(const WipeTower::ToolChangeResult& tcr, const Vec2f& translation, float angle) const;
 
@@ -279,6 +280,14 @@ private:
         const std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>>   &layers_to_print,
         GCodeOutputStream                                                   &output_stream);
 
+    void atc_process_layers(
+        Print                                                         &print,
+        const ToolOrdering                                            &tool_ordering,
+        GCodeOutputStream                                             &output_stream
+    );
+    
+    
+    
     // Process all layers of a single object instance (sequential mode) with a parallel pipeline:
     // Generate G-code, run the filters (vase mode, cooling buffer), run the G-code analyser
     // and export G-code into file.
