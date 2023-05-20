@@ -1260,7 +1260,8 @@ void Print::ATC_plan_wipe_toolchange() {
             atc_old_tool = prev_region_idx;
             atc_new_tool = print_region_idx;
             atc_print_z = atc_wiping_layer_height * atc_wipe_tower_idx;
-            printing_node->need_wipe = true;
+            // printing_node->need_wipe = true;
+            m_ATC_printing_map.get_node(printing_node_idx-1)->need_wipe = true; // wipe before the tool change
 
             atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
             std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;

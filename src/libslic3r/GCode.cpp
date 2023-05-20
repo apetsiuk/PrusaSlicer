@@ -2238,17 +2238,18 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     std::vector<GCode::LayerToPrint> layers_to_print = GCode::collect_layers_to_print(*print.m_objects[0]);
 
     struct ATC_printing_piece* printing_node;
-
+    unsigned int atc_wiping_layer_idx = 0;
     for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
     {
         printing_node = print.m_ATC_printing_map.get_node(printing_node_idx);
         size_t print_layer_idx = printing_node->layer;
         size_t print_region_idx = printing_node->region;
         unsigned int current_extruder_idx = print_region_idx;
-        unsigned int atc_wiping_layer_idx = 0;
+        
 
         GCode::LayerResult my_atc_piece_result;
         GCode::LayerToPrint& layer_to_print = layers_to_print[print_layer_idx];
+
 
 
         {
@@ -2553,9 +2554,12 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
         }
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
 
-        if (printing_node_idx == 3)
+        if (printing_node->need_wipe)
         {
-            output_stream.write(m_wipe_tower->append_tcr(*this, print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0], 1, 0.2));
+            output_stream.write(m_wipe_tower->append_tcr(*this, 
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0], 
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0].new_tool,
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0].print_z));
             atc_wiping_layer_idx += 1;
         }
         
