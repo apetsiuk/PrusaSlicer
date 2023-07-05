@@ -117,6 +117,224 @@ public:
     static const std::vector<std::string>& get() { return Colors; }
 };
 
+
+
+
+
+
+
+
+
+
+
+
+struct printing_piece_UPD {
+    size_t number;
+    float print_z;
+
+    bool object;
+    bool support;
+
+    int Rlayer;
+    int Blayer;
+    int region;
+
+    bool state;
+    int batch;
+    bool need_wipe;
+
+    double intersection_self;
+    //float intersection_ext;
+    //float intersection_void;
+    printing_piece_UPD* next;
+};
+
+
+class atc_linked_list_UPD
+{
+private:
+    printing_piece_UPD* head, * tail;
+public:
+    atc_linked_list_UPD()
+    {
+        head = NULL;
+        tail = NULL;
+    }
+
+    void append_node(size_t number, float print_z, bool object, bool support, int Rlayer, int Blayer, int region, bool state, int batch, bool need_wipe, double intersection_self)
+    {
+        printing_piece_UPD* tmp = new printing_piece_UPD;
+        tmp->number = number;
+        tmp->print_z = print_z;
+        tmp->object = object;
+        tmp->support = support;
+        tmp->Rlayer = Rlayer;
+        tmp->Blayer = Blayer;
+        tmp->region = region;
+        tmp->state = state;
+        tmp->batch = batch;
+        tmp->need_wipe = need_wipe;
+        tmp->intersection_self = intersection_self;
+        tmp->next = NULL;
+
+        if (head == NULL)
+        {
+            head = tmp;
+            tail = tmp;
+        }
+        else
+        {
+            tail->next = tmp;
+            tail = tail->next;
+        }
+    }
+
+    printing_piece_UPD* gethead()
+    {
+        return head;
+    }
+
+    static void display(printing_piece_UPD* head)
+    {
+        if (head == NULL)
+        {
+            std::cout << "NULL" << std::endl;
+        }
+        else
+        {
+            std::cout
+                << "#" << head->number
+                << "--z=" << head->print_z
+                << "--o" << head->object
+                << "--s" << head->support
+                << "--RL" << head->Rlayer
+                << ", {BL" << head->Blayer
+                << ", R" << head->region << "}"
+                << "--b" << head->batch
+                << "--w" << head->need_wipe
+                << "--int_self=" << head->intersection_self
+                << std::endl;
+            display(head->next);
+        }
+    }
+
+
+    std::pair<int, int> get_layer_and_region_ids(int position)
+    {
+        printing_piece_UPD* temp;
+        temp = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            temp = temp->next;
+        }
+        int blayer_id = temp->Blayer;
+        int region_id = temp->region;
+        return std::make_pair(blayer_id, region_id);
+    }
+
+    void delete_node(int position)
+    {
+        printing_piece_UPD* temp;
+        printing_piece_UPD* prev;
+
+        if (position == 1)
+        {
+            prev = head;
+            temp = head->next;
+            head = temp;
+            delete(prev);
+        }
+        else
+        {
+            temp = head;
+            prev = NULL;
+            for (int i = 0; i < position - 1 && temp; i++)
+            {
+                prev = temp;
+                temp = temp->next;
+            }
+            if (prev && temp)
+            {
+                prev->next = temp->next;
+                delete(temp);
+            }
+        }
+    }
+
+
+    int get_count()
+    {
+        int number_of_nodes = 0;
+        printing_piece_UPD* current = head;
+        while (current != NULL)
+        {
+            number_of_nodes++;
+            current = current->next;
+        }
+
+        return number_of_nodes;
+    }
+
+    struct printing_piece_UPD* node_search(struct printing_piece_UPD* p, int Blayer, int region)
+    {
+        if (p == NULL)
+            return NULL;
+        if (Blayer == p->Blayer && region == p->region)
+        {
+            //std::cout << "///////////" << p->layer << ", " << p->region << std::endl;
+            return p;
+        }
+        return node_search(p->next, Blayer, region);
+    }
+
+    struct printing_piece_UPD* node_search(struct printing_piece_UPD* p, int state)
+    {
+        if (p == NULL)
+            return NULL;
+        if (p->state == state)
+        {
+            return p;
+        }
+        return node_search(p->next, state);
+    }
+
+    struct printing_piece_UPD* get_node(int position)
+    {
+        printing_piece_UPD* node;
+        node = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            node = node->next;
+        }
+        return node;
+    }
+
+
+
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class GCode {
 public:        
     GCode() : 
@@ -188,6 +406,11 @@ public:
         const PrintObject* 	object()  const { return (this->layer() != nullptr) ? this->layer()->object() : nullptr; }
         coordf_t            print_z() const { return (object_layer != nullptr && support_layer != nullptr) ? 0.5 * (object_layer->print_z + support_layer->print_z) : this->layer()->print_z; }
     };
+
+    //----------------------------------------------------------
+    void                    layer_batch_labeling(Print& print);
+    atc_linked_list_UPD     ATC_printing_map;
+    //----------------------------------------------------------
 
 private:
     class GCodeOutputStream {

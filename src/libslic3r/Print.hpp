@@ -761,7 +761,9 @@ public:
 
 };
 
-
+//////////////////////////////////////////////////////////////////
+/* */
+//////////////////////////////////////////////////////////////////
 
 
 
@@ -794,6 +796,7 @@ public:
     void                set_task(const TaskParams &params) override { PrintBaseWithState<PrintStep, psCount>::set_task_impl(params, m_objects); }
     void                process() override;
     void                layer_batch_labeling() override;
+    void                layer_batch_labeling2();
     
     void                finalize() override { PrintBaseWithState<PrintStep, psCount>::finalize_impl(m_objects); }
 

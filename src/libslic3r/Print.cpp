@@ -905,7 +905,8 @@ double ATC_check_region_intersection(LayerRegion& upper, LayerRegion& lower)
 
 // --------------------------------------------------------------------
 
-void Print::layer_batch_labeling() {
+void Print::layer_batch_labeling() 
+{
     std::cout << "-- layer_batch_labeling() --" << std::endl;
     bool need_wipe = 0;
 
@@ -1211,6 +1212,9 @@ void Print::layer_batch_labeling() {
 
 }
 
+void Print::layer_batch_labeling2(){
+    std::cout << "layer_batch_labeling2" << std::endl;
+}
 
 
 void Print::ATC_plan_wipe_toolchange() {

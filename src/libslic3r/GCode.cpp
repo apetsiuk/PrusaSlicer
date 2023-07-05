@@ -1924,6 +1924,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
         // Sort layers by Z.
         // All extrusion moves with the same top layer height are extruded uninterrupted.
         std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>> layers_to_print = collect_layers_to_print(print);
+
         // Prusa Multi-Material wipe tower.
         if (has_wipe_tower && !layers_to_print.empty()) {
             m_wipe_tower.reset(new WipeTowerIntegration(print.config(), *print.wipe_tower_data().priming.get(), print.wipe_tower_data().tool_changes, *print.wipe_tower_data().final_purge.get()));
@@ -1992,7 +1993,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
     // ATC // put here whatever in the "else" statement above // inherit from the NON-SEQUENTIAL mode
     if (print.default_object_config().atc_enable_wipe_tower)
     {
-        std::cout << "~~~~~~~~~~~ Sort layers by Z ~~~~~~~~~~~" << std::endl;
+        std::cout << "~~~~~~~~~~~ ATC NON-SEQUENTIAL mode ~~~~~~~~~~~" << std::endl;
         // Sort layers by Z.
         // All extrusion moves with the same top layer height are extruded uninterrupted.
         std::vector<std::pair<coordf_t, std::vector<LayerToPrint>>> layers_to_print = collect_layers_to_print(print);
@@ -2046,6 +2047,15 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
         // and export G-code into file.
         // ===========================================================
         // ATC should be another function
+
+
+        //print.layer_batch_labeling();
+        // HERE ! or right in the atc_process_layers(print, tool_ordering, file) function
+
+
+
+
+
         this->atc_process_layers(print, tool_ordering, file);
         // this->process_layers(print, tool_ordering, print_object_instances_ordering, layers_to_print, file);
         // ===========================================================
@@ -2819,22 +2829,415 @@ namespace Skirt {
 
 
 
+// --------------------------------------------------------------------
+double ATC_check_region_intersection2(LayerRegion& upper, LayerRegion& lower)
+{
+    ExPolygons A_polygons = to_expolygons(upper.slices.surfaces); // upper
+    ExPolygons B_polygons = to_expolygons(lower.slices.surfaces); // lower
+    ExPolygons region_intersection = intersection_ex(A_polygons, B_polygons);
+
+    double A_expolygon_area = area(A_polygons);
+    double B_expolygon_area = area(B_polygons);
+    double intersection_area = area(region_intersection);
+    return intersection_area;
+}
+// --------------------------------------------------------------------
+
+
+void GCode::layer_batch_labeling(Print& print)
+{
+    std::cout << "-- GCode:: layer_batch_labeling() --" << std::endl;
+    
+    std::vector<GCode::LayerToPrint> layers_to_print_ATC = collect_layers_to_print(*print.m_objects[0]);
+
+    atc_linked_list_UPD printing_map_initial, printing_map_batched;
+    atc_linked_list_UPD support_map;
+    bool need_wipe = 0;
+
+
+    int BL = 0; // here we add additional variable just for batching analysis
+    bool state = false; // initially all nodes are not processed
+    int batch = 0; // initial batch is zero
+    size_t atc_map_number = 0;
+    for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
+        if (layers_to_print_ATC[RL].object_layer != NULL)
+        {
+            for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
+            {
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                {
+                    printing_map_initial.append_node(
+                        atc_map_number, // consecutive number
+                        layers_to_print_ATC[RL].object_layer->print_z, // print_z
+                        true, // object layer
+                        false, // support layer
+                        RL, // layer,
+                        BL, // batch layer
+                        R,  // region
+                        state, // node processed state
+                        batch, // batch
+                        need_wipe, // wiping layer
+                        0 // intersection_self
+                    );
+                    atc_map_number += 1;
+                }
+            }
+            BL += 1;
+        }
+    }
+
+    atc_map_number = 0;
+    for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
+        if (layers_to_print_ATC[RL].support_layer != NULL)
+        {
+            support_map.append_node(
+                atc_map_number, // consecutive number
+                -1, // print_z
+                false, // object layer
+                true, // support layer
+                RL, // layer,
+                -1, // batch layer
+                -1,  // region
+                false, // node processed state
+                -1, // batch
+                need_wipe, // wiping layer
+                0 // intersection_self
+            );
+            atc_map_number += 1;
+        }
+    }
+
+    std::cout << "PRINTING MAP INITIAL: (count=" << printing_map_initial.get_count() << ")" << std::endl;
+    atc_linked_list_UPD::display(printing_map_initial.gethead());
+    std::cout << "\n\nSUPPORT MAP: (count=" << support_map.get_count() << ")" << std::endl;
+    atc_linked_list_UPD::display(support_map.gethead());
+
+
+
+
+    int printing_pieces_count = printing_map_initial.get_count();
+    int atc_appending_node_number = 0;
+    float atc_print_z = 0;
+    double cum_layer_height = 0;
+    double atc_safe_height = print.m_objects[0]->config().atc_safe_batch_height.value; // 0.4 default value in mm
+    double atc_running_height = 0; // check it more thoroughly at the later stages
+    int batch_new = 0;
+    double region_intersection = 0;
+    double critical_intersection = print.m_objects[0]->config().atc_critical_intersection_area; // 0.5
+    double intersection_self = 0;
+
+    //this->config().bed_temperature;
+
+    int number_of_colors = print.get_object(0)->all_regions().size();
+    int max_layers_in_object = print.get_object(0)->layers().size();
+    int intersected_node_state;
+
+    //int atc_iterator = 0;
+    //int atc_step = 0;
+    
+    int intersected_region;
+    struct printing_piece_UPD* node;
+    node = NULL;
+    struct printing_piece_UPD* last_node;
+    last_node = NULL;
+    struct printing_piece_UPD* candidate_node;
+    candidate_node = NULL;
+    int overall_intersections_below = 0;
+    
+    
+    int current_Rlayer_idx, current_Blayer_idx, current_region_idx, candidate_Blayer_idx, candidate_region_idx;
+
+    std::cout << "*********************************************" << std::endl;
+    std::cout << "************** UPD MAIN ALGORITHM ***************" << std::endl;
+    while (printing_map_batched.get_count() <= printing_map_initial.get_count() - 1)
+    {
+        //atc_step += 1;
+        // get the first node in the list with zero-state (which is not done)
+        if (last_node != NULL)
+            node = last_node;
+        if (last_node == NULL)
+            node = printing_map_initial.node_search(printing_map_initial.gethead(), 0); // get first node with zero-state
+
+        atc_print_z = node->print_z;
+        current_Rlayer_idx = node->Rlayer;
+        current_Blayer_idx = node->Blayer;
+        current_region_idx = node->region;
+        candidate_Blayer_idx = node->Blayer + 1;
+        candidate_region_idx = node->region; // the same region
+
+        //std::cout << "--STEP-- " << atc_step << ", PROCESSED NODES=" << atc_iterator << std::endl;
+        std::cout << "got node {L" << current_Blayer_idx << ", R" << current_region_idx << "}" << " -- candidate {Lc" << candidate_Blayer_idx << ", Rc" << candidate_region_idx << "}" << std::endl;
+
+
+
+        if (node->state == 0)
+        {
+            printing_map_batched.append_node(
+                atc_appending_node_number,
+                atc_print_z,
+                true, // object_layer
+                false, // support_layer
+                current_Rlayer_idx, // regular layer idx
+                current_Blayer_idx,
+                current_region_idx,
+                1, // state = 1
+                batch_new,
+                need_wipe,
+                intersection_self
+            );
+
+            atc_appending_node_number += 1;
+            last_node = printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, current_region_idx);
+            printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, current_region_idx)->state = 1;
+            std::cout << "appended node {L" << current_Blayer_idx << ", R" << current_region_idx << "}" << std::endl;
+            //atc_iterator += 1;
+            atc_running_height += print.get_object(0)->layers()[current_Blayer_idx]->height; //in mm
+            std::cout << "===atc_running_height===" << atc_running_height << "mm" << std::endl;
+        }
+
+        if (printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx) && candidate_Blayer_idx < max_layers_in_object)
+        {
+            Layer* layer_candidate = print.get_object(0)->layers()[candidate_Blayer_idx];
+            Layer* layer_current = print.get_object(0)->layers()[current_Blayer_idx];
+            LayerRegion& region_candidate = *layer_candidate->regions()[current_region_idx];
+
+            overall_intersections_below = 0;
+            for (int color = 0; color < number_of_colors; color++)
+            {
+                LayerRegion& region_below = *layer_current->regions()[color];
+
+                region_intersection = ATC_check_region_intersection2(region_candidate, region_below) / 1e+10;
+                std::cout << "checking intersections for {L" << current_Blayer_idx << ", R" << color << "}: region_intersection=" << region_intersection << std::endl;
+                if (printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, color))
+                {
+                    intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, color)->state;
+                    if (color != current_region_idx && region_intersection > critical_intersection && intersected_node_state == 0)
+                    {
+                        overall_intersections_below += 1;
+                        std::cout << "overall_intersections_below=" << overall_intersections_below << std::endl;
+                    }
+                }
+            }
+
+            for (int color = 0; color < number_of_colors; color++)
+            {
+                LayerRegion& region_below = *layer_current->regions()[color];
+                region_intersection = ATC_check_region_intersection2(region_candidate, region_below) / 1e+10;
+                std::cout << "checking intersections for {L" << current_Blayer_idx << ", R" << color << "}: region_intersection=" << region_intersection << std::endl;
+                if (color == current_region_idx)
+                {
+                    intersection_self = region_intersection;
+                }
+                if (printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, color))
+                {
+                    intersected_node_state = printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, color)->state;
+                    if (color != current_region_idx && (region_intersection > critical_intersection && intersected_node_state == 0))
+                    {
+                        // stop, remap
+                        std::cout << "detected intersection with {L" << current_Blayer_idx << ", R" << color << "}" << std::endl;
+                        std::cout << "breaking" << std::endl;
+                        last_node = NULL;
+                        break;
+                    }
+                    if (color != current_region_idx && region_intersection <= critical_intersection && overall_intersections_below == 0)
+                    {
+                        candidate_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx);
+                        if (candidate_node)
+                        {
+                            // append new node to the batched map
+                            printing_map_batched.append_node(
+                                atc_appending_node_number,
+                                candidate_node->print_z,
+                                true,
+                                false,
+                                candidate_node->Rlayer,
+                                candidate_Blayer_idx,
+                                candidate_region_idx,
+                                1, // state = 1
+                                batch_new,
+                                need_wipe,
+                                intersection_self
+                            );
+
+                            atc_appending_node_number += 1;
+                            last_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx);
+                            atc_running_height += print.get_object(0)->layers()[current_Blayer_idx]->height; //in mm
+                            std::cout << "===atc_running_height===" << atc_running_height << "mm" << std::endl;
+
+                            printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx)->state = 1;
+                            //atc_iterator += 1;
+                            std::cout << "no intersections --> appending node {L" << candidate_Blayer_idx << ", R" << candidate_region_idx << "}" << std::endl;
+                            break;
+                        }
+                        else
+                        {
+                            std::cout << "no intersections, BUT the candidate node is not found: breaking" << std::endl;
+                            last_node = NULL;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "before intersection check the candidate node is not found: continuing" << std::endl;
+                    last_node = NULL;
+                    continue;
+                }
+            }
+        }
+
+        if (candidate_Blayer_idx >= max_layers_in_object || printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx) == NULL)
+        {
+            std::cout << "candidate_layer_idx >= max_layers_in_object OR printing node==NULL: continuing" << std::endl;
+            last_node = NULL;
+            continue;
+        }
+
+        if (atc_running_height >= atc_safe_height)
+        {
+            atc_running_height = 0;
+            std::cout << "detected critical height: continuing" << std::endl;
+            last_node = NULL;
+            continue;
+        }
+
+        //this->ATC_printing_map = printing_map_batched;
+    }
+    std::cout << "********** END of UPD MAIN ALGORITHM ************" << std::endl;
+    std::cout << "*********************************************" << std::endl;
+
+    std::cout << "::::::::::::::::::::::::::::::::::\n\n\n" << std::endl;
+    std::cout << "PRINTING MAP INITIAL (" << printing_map_initial.get_count() << "):" << std::endl;
+    atc_linked_list_UPD::display(printing_map_initial.gethead());
+    std::cout << "\nPRINTING MAP BATCHED (" << printing_map_batched.get_count() << "):" << std::endl;
+    atc_linked_list_UPD::display(printing_map_batched.gethead());
+    std::cout << "\nSUPPORT MAP (" << support_map.get_count() << "):" << std::endl;
+    atc_linked_list_UPD::display(support_map.gethead());
+    std::cout << "\n\n\n::::::::::::::::::::::::::::::::::" << std::endl;
+
+
+
+    std::cout << "*************************************************************************" << std::endl;
+    std::cout << "********** ANALYZE BATCHES BEFORE COMBINING INTO A FINAL MAP ************" << std::endl;
+
+    struct printing_piece_UPD* temp_batch_piece;
+    int running_batch = 0;
+    int last_region = 0;
+    size_t atc_temp_tool_changes = 0;
+    for (int i = 0; i < printing_map_batched.get_count(); i++)
+    {
+        temp_batch_piece = printing_map_batched.get_node(i);
+        int print_region_idx = temp_batch_piece->region;
+
+        if (print_region_idx != last_region)
+        {
+            running_batch = running_batch + 1;
+            temp_batch_piece->batch = running_batch;
+            last_region = print_region_idx;
+            atc_temp_tool_changes = atc_temp_tool_changes + 1;
+        }
+        temp_batch_piece->batch = running_batch;
+    }
+
+    std::cout << "\n NUMBER OF BATCHED TOOL CHANGES = " << atc_temp_tool_changes << std::endl;
+    std::cout << "\n******* END of ANALYZE BATCHES BEFORE COMBINING INTO A FINAL MAP ********" << std::endl;
+    std::cout << "*************************************************************************" << std::endl;
+
+
+
+    std::cout << "*************************************************************************" << std::endl;
+    std::cout << "****** COMBINE OBJECT AND SUPPORT PIECES INTO A FINAL SINGLE MAP ********" << std::endl;
+    atc_linked_list_UPD FINAL_MAP;
+
+    struct printing_piece_UPD* obj_temp_piece;
+    struct printing_piece_UPD* supp_temp_piece;
+    size_t atc_final_map_counter = 0;
+    for (int i = 0; i < printing_map_batched.get_count(); i++)
+    {
+        obj_temp_piece = printing_map_batched.get_node(i);
+        int print_Rlayer_idx = obj_temp_piece->Rlayer;
+        int print_region_idx = obj_temp_piece->region;
+        std::cout << "{RL" << print_Rlayer_idx << ", R" << print_region_idx << "}" << std::endl;
+        FINAL_MAP.append_node(
+            atc_final_map_counter, // consecutive number
+            obj_temp_piece->print_z, // print_z
+            true, // object layer
+            false, // support layer
+            obj_temp_piece->Rlayer, // layer,
+            obj_temp_piece->Blayer, // batch layer
+            obj_temp_piece->region,  // region
+            false, // node processed state
+            obj_temp_piece->batch, // batch
+            obj_temp_piece->need_wipe, // need_wipe
+            obj_temp_piece->intersection_self
+        );
+        atc_final_map_counter += 1;
+
+        for (int k = 0; k < support_map.get_count(); k++)
+        {
+            supp_temp_piece = support_map.get_node(k);
+            if (!supp_temp_piece->state)
+            {
+                int support_Rlayer_idx = supp_temp_piece->Rlayer;
+                //std::cout << "Support L" << support_Rlayer_idx << ", state=" << supp_temp_piece->state << std::endl;
+                //if ((print_Rlayer_idx - support_Rlayer_idx) <= 1 || (support_Rlayer_idx - print_Rlayer_idx) <= 1)
+                if ((support_Rlayer_idx - print_Rlayer_idx) <= 1)
+                {
+                    std::cout << "-- S, RL" << support_Rlayer_idx << std::endl;
+                    FINAL_MAP.append_node(
+                        atc_final_map_counter, // consecutive number
+                        supp_temp_piece->print_z, // print_z
+                        false, // object layer
+                        true, // support layer
+                        supp_temp_piece->Rlayer, // layer,
+                        supp_temp_piece->Blayer, // batch layer
+                        obj_temp_piece->region,  // region
+                        false, // node processed state
+                        obj_temp_piece->batch, // batch
+                        obj_temp_piece->need_wipe, // need_wipe
+                        obj_temp_piece->intersection_self
+                    );
+                    atc_final_map_counter += 1;
+                    supp_temp_piece->state = 1;
+                    break;
+                }
+
+            }
+        }
+    }
+
+
+    //this->ATC_printing_map = printing_map_batched;
+    this->ATC_printing_map = FINAL_MAP;
+
+    
+    
+
+    std::cout << "\n********** FINAL MAP ************\n" << std::endl;
+    std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
+    //atc_linked_list_UPD::display(this->ATC_printing_map.gethead());
+    this->ATC_printing_map.display(this->ATC_printing_map.gethead());
+    std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
+
+    std::cout << "*** END of COMBINE OBJECT AND SUPPORT PIECES INTO A FINAL SINGLE MAP ****" << std::endl;
+    std::cout << "*************************************************************************" << std::endl;
+}
 
 
 
 
 void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, GCodeOutputStream& output_stream)
 {
+
+    this->layer_batch_labeling(print);
+
     std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
     print.get_ATC_printing_map().display(print.get_ATC_printing_map().gethead());
     // get to the generated wipe tower
     print.m_ATC_wipe_tower_data.tool_changes[0][0];
 
 
-
-
     std::vector<GCode::LayerToPrint> layers_to_print = GCode::collect_layers_to_print(*print.m_objects[0]);
-
     struct ATC_printing_piece* printing_node;
     unsigned int atc_wiping_layer_idx = 0;
     for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
@@ -2987,7 +3390,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             //gcode += (layer_tools.has_wipe_tower && gcode->m_wipe_tower) ? gcode->m_wipe_tower->tool_change(*this, extruder_id, extruder_id == layer_tools.extruders.back()) : this->set_extruder(extruder_id, print_z);
             //gcode_string += gcode->set_extruder(current_extruder_idx, print_z);
 
-            
+
             if (auto loops_it = skirt_loops_per_extruder.find(current_extruder_idx); loops_it != skirt_loops_per_extruder.end()) {
                 const std::pair<size_t, size_t> loops = loops_it->second;
                 this->set_origin(0., 0.);
@@ -3022,7 +3425,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                 // Allow a straight travel move to the first object point.
                 m_avoid_crossing_perimeters.disable_once();
             }
-            
+
 
             // =================== SUBSTITUTE for gcode->set_extruder(...) ====================
             //std::string GCode::set_extruder(unsigned int extruder_id, double print_z)
@@ -3185,8 +3588,9 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             //last_layer = &layer == &layers_to_print.back()
             my_atc_piece_result.cooling_buffer_flush = object_layer || raft_layer || last_layer;
             //return result;
-
         }
+        
+        
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
 
         if (printing_node->need_wipe)
@@ -3197,15 +3601,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                 print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0].print_z));
             atc_wiping_layer_idx += 1;
         }
-
-
     }
-
 }
-
-
-
-
 
 
 
