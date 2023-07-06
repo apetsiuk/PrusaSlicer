@@ -409,6 +409,7 @@ public:
 
     //----------------------------------------------------------
     void                    layer_batch_labeling(Print& print);
+    void                    ATC_plan_wipe_toolchange(Print& print);
     atc_linked_list_UPD     ATC_printing_map;
     //----------------------------------------------------------
 

@@ -919,11 +919,13 @@ private:
     // Estimated print time, filament consumed.
     PrintStatistics                         m_print_statistics;
 
+ public:
     // ATC
     ATC_linked_list                         m_ATC_printing_map;
     ToolOrdering 							m_ATC_tool_ordering;
     WipeTowerData                           m_ATC_wipe_tower_data{ m_ATC_tool_ordering };
 
+private:
     // To allow GCode to set the Print's GCodeExport step status.
     friend class GCode;
     // Allow PrintObject to access m_mutex and m_cancel_callback.

@@ -3225,11 +3225,87 @@ void GCode::layer_batch_labeling(Print& print)
 
 
 
+void GCode::ATC_plan_wipe_toolchange(Print& print)
+{
+    std::cout << "\n\n\nvoid GCode::ATC_plan_wipe_toolchange()\n\n\n" << std::endl;
+    // create atc_wipe_tower
+    std::vector<float> wiping_matrix(cast<float>(print.m_config.wiping_volumes_matrix.values));
+    std::vector<std::vector<float>> wipe_volumes;
+    const unsigned int number_of_extruders = (unsigned int)(sqrt(wiping_matrix.size()) + EPSILON);
+    for (unsigned int i = 0; i < number_of_extruders; ++i)
+        wipe_volumes.push_back(std::vector<float>(wiping_matrix.begin() + i * number_of_extruders, wiping_matrix.begin() + (i + 1) * number_of_extruders));
+
+    print.m_ATC_wipe_tower_data.tool_ordering = ToolOrdering(print, (unsigned int)-1, true);
+
+    WipeTower atc_wipe_tower(print.m_config, wipe_volumes, print.m_ATC_wipe_tower_data.tool_ordering.first_extruder());
+    for (size_t i = 0; i < number_of_extruders; ++i)
+        atc_wipe_tower.set_extruder(i, print.m_config);
+
+
+    // wiping parameters
+    bool need_wipe = true;
+    float atc_wiping_volume = 140.0;
+    size_t atc_old_tool;
+    size_t atc_new_tool;
+    float atc_wiping_layer_height = 0.2;
+    size_t atc_wipe_tower_idx = 0;
+    float atc_print_z;
+
+    // building wiping tool changes
+    print.m_ATC_wipe_tower_data.clear();
+    // iterate over the printing pieces
+    struct printing_piece_UPD* printing_node;
+    int prev_region_idx = 0;
+    for (int printing_node_idx = 0; printing_node_idx < ATC_printing_map.get_count(); printing_node_idx++)
+    {
+        printing_node = ATC_printing_map.get_node(printing_node_idx);
+        int print_Rlayer_idx = printing_node->Rlayer;
+        int print_Blayer_idx = printing_node->Blayer;
+        int print_region_idx = printing_node->region;
+
+        std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
+
+        if (print_Blayer_idx != -1)
+        {
+            if (print_region_idx != prev_region_idx)
+            {
+                std::cout << "wipe tower here" << std::endl;
+                atc_wipe_tower_idx += 1;
+                atc_old_tool = prev_region_idx;
+                atc_new_tool = print_region_idx;
+                atc_print_z = atc_wiping_layer_height * atc_wipe_tower_idx;
+                // printing_node->need_wipe = true;
+                ATC_printing_map.get_node(printing_node_idx - 1)->need_wipe = true; // wipe before the tool change
+
+                atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
+                std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+            }
+            prev_region_idx = print_region_idx;
+            std::cout << "\n===================================\n\n\n" << std::endl;
+            std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
+            std::cout << "\n\n\n===================================\n" << std::endl;
+        }
+    }
+
+    print.m_ATC_wipe_tower_data.tool_changes.reserve(atc_wipe_tower_idx + 1);
+    atc_wipe_tower.generate(print.m_ATC_wipe_tower_data.tool_changes);
+    std::cout << "\n\n\ncheck size = " << print.m_ATC_wipe_tower_data.tool_changes.size() << std::endl;
+
+
+
+}
+
+
+
+
+
+
 
 void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, GCodeOutputStream& output_stream)
 {
-
     this->layer_batch_labeling(print);
+    this->ATC_plan_wipe_toolchange(print);
+
 
     std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
     print.get_ATC_printing_map().display(print.get_ATC_printing_map().gethead());
@@ -3238,14 +3314,21 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 
 
     std::vector<GCode::LayerToPrint> layers_to_print = GCode::collect_layers_to_print(*print.m_objects[0]);
-    struct ATC_printing_piece* printing_node;
+    struct printing_piece_UPD* printing_node;
     unsigned int atc_wiping_layer_idx = 0;
-    for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
+
+
+    //for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
+    for (size_t printing_node_idx = 0; printing_node_idx < this->ATC_printing_map.get_count(); printing_node_idx++)
     {
-        printing_node = print.m_ATC_printing_map.get_node(printing_node_idx);
-        size_t print_layer_idx = printing_node->layer;
+        printing_node = this->ATC_printing_map.get_node(printing_node_idx);
+        size_t print_layer_idx = printing_node->Rlayer;
         size_t print_region_idx = printing_node->region;
         unsigned int current_extruder_idx = print_region_idx;
+        std::cout << "~~~ NODE: print_layer_idx=" << print_layer_idx
+            << ", print_region_idx=" << print_region_idx
+            << ", current_extruder_idx=" << current_extruder_idx
+            << std::endl;
 
 
         GCode::LayerResult my_atc_piece_result;
@@ -3337,6 +3420,64 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             // Group extrusions by an extruder, then by an object, an island and a region.
             std::map<unsigned int, std::vector<GCode::ObjectByExtruder>> by_extruder;
             bool is_anything_overridden = const_cast<LayerTools&>(layer_tools).wiping_extrusions().is_anything_overridden();
+
+
+            if (layer_to_print.support_layer != nullptr) {
+                const SupportLayer& support_layer = *layer_to_print.support_layer;
+                const PrintObject& object = *support_layer.object();
+                if (!support_layer.support_fills.entities.empty()) {
+                    ExtrusionRole   role = support_layer.support_fills.role();
+                    bool            has_support = role == erMixed || role == erSupportMaterial;
+                    bool            has_interface = role == erMixed || role == erSupportMaterialInterface;
+                    // Extruder ID of the support base. -1 if "don't care".
+                    unsigned int    support_extruder = object.config().support_material_extruder.value - 1;
+                    // Shall the support be printed with the active extruder, preferably with non-soluble, to avoid tool changes?
+                    bool            support_dontcare = object.config().support_material_extruder.value == 0;
+                    // Extruder ID of the support interface. -1 if "don't care".
+                    unsigned int    interface_extruder = object.config().support_material_interface_extruder.value - 1;
+                    // Shall the support interface be printed with the active extruder, preferably with non-soluble, to avoid tool changes?
+                    bool            interface_dontcare = object.config().support_material_interface_extruder.value == 0;
+                    if (support_dontcare || interface_dontcare) {
+                        // Some support will be printed with "don't care" material, preferably non-soluble.
+                        // Is the current extruder assigned a soluble filament?
+                        unsigned int dontcare_extruder = current_extruder_idx;
+                        if (print.config().filament_soluble.get_at(dontcare_extruder)) {
+                            // The last extruder printed on the previous layer extrudes soluble filament.
+                            // Try to find a non-soluble extruder on the same layer.
+
+                            for (unsigned int extruder_id : layer_tools.extruders)
+                                if (!print.config().filament_soluble.get_at(extruder_id)) {
+                                    dontcare_extruder = extruder_id;
+                                    break;
+                                }
+
+                            ;
+                        }
+                        if (support_dontcare)
+                            support_extruder = dontcare_extruder;
+                        if (interface_dontcare)
+                            interface_extruder = dontcare_extruder;
+                    }
+                    // Both the support and the support interface are printed with the same extruder, therefore
+                    // the interface may be interleaved with the support base.
+                    bool single_extruder = !has_support || support_extruder == interface_extruder;
+                    // Assign an extruder to the base.
+                    //GCode::ObjectByExtruder& obj = object_by_extruder(by_extruder, has_support ? support_extruder : interface_extruder, &layer_to_print - layers_to_print.data(), layers_to_print.size());
+                    GCode::ObjectByExtruder& obj = object_by_extruder(by_extruder, has_support ? support_extruder : interface_extruder, 0, 1);
+
+                    obj.support = &support_layer.support_fills;
+                    obj.support_extrusion_role = single_extruder ? erMixed : erSupportMaterial;
+                    if (!single_extruder && has_interface) {
+                        //GCode::ObjectByExtruder& obj_interface = object_by_extruder(by_extruder, interface_extruder, &layer_to_print - layers_to_print.data(), layers_to_print.size());
+                        GCode::ObjectByExtruder& obj_interface = object_by_extruder(by_extruder, interface_extruder, 0, 1);
+                        obj_interface.support = &support_layer.support_fills;
+                        obj_interface.support_extrusion_role = erSupportMaterialInterface;
+                    }
+                }
+            }
+
+
+
 
             if (layer_to_print.object_layer != nullptr) {
                 const Layer& layer = *layer_to_print.object_layer;
@@ -3568,6 +3709,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                         m_object_layer_over_raft = false;
                         // support_extrusion_role is erSupportMaterial, erSupportMaterialInterface or erMixed for all extrusion paths.
                         gcode_string += extrude_support(instance_to_print.object_by_extruder.support->chained_path_from(m_last_pos, instance_to_print.object_by_extruder.support_extrusion_role));
+                        std::cout << "~~~ EXTRUDE SUPPORT" << std::endl;
                         m_layer = layer_to_print.layer();
                         m_object_layer_over_raft = object_layer_over_raft;
                     }
@@ -3575,6 +3717,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                         const auto& by_region_specific = is_anything_overridden ? island.by_region_per_copy(by_region_per_copy_cache, static_cast<unsigned int>(instance_to_print.instance_id), current_extruder_idx, print_wipe_extrusions != 0) : island.by_region;
                         gcode_string += extrude_infill(print, by_region_specific, false);
                         gcode_string += extrude_perimeters(print, by_region_specific);
+                        std::cout << "~~~ EXTRUDE INFILL AND PERIMETERS" << std::endl;
                     }
                 }
             }
