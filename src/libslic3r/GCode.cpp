@@ -1991,7 +1991,8 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
     
     
     // ATC // put here whatever in the "else" statement above // inherit from the NON-SEQUENTIAL mode
-    if (print.default_object_config().atc_enable_wipe_tower)
+    //if (print.default_object_config().atc_enable_wipe_tower)
+    if (true)
     {
         std::cout << "~~~~~~~~~~~ ATC NON-SEQUENTIAL mode ~~~~~~~~~~~" << std::endl;
         // Sort layers by Z.
@@ -3243,7 +3244,7 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
 
 
     // wiping parameters
-    bool need_wipe = true;
+    //bool need_wipe = true;
     float atc_wiping_volume = 140.0;
     size_t atc_old_tool;
     size_t atc_new_tool;
@@ -3335,9 +3336,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
         GCode::LayerToPrint& layer_to_print = layers_to_print[print_layer_idx];
 
 
-
         {
-            std::cout << "debug" << std::endl;
             // ---!NB Input parameters
             // GCode::LayerToPrint& layer = layers_to_print[print_layer_idx]; - input param, so it is already here
             const LayerTools& layer_tools = tool_ordering.tools_for_layer(layer_to_print.print_z());
