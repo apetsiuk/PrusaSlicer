@@ -2432,6 +2432,8 @@ void GCodeViewer::refresh_render_paths(bool keep_sequential_current_first, bool 
         case EViewType::Feedrate:       { color = m_extrusions.ranges.feedrate.get_color_at(path.feedrate); break; }
         case EViewType::FanSpeed:       { color = m_extrusions.ranges.fan_speed.get_color_at(path.fan_speed); break; }
         case EViewType::Temperature:    { color = m_extrusions.ranges.temperature.get_color_at(path.temperature); break; }
+        // instead of 12 should be a batch number // check struct Path in GCodeViewer.hpp
+        case EViewType::ATCLayerBatching: { color = m_extrusions.ranges.atc_batching.get_color_at(132); break; } 
 #if ENABLE_PREVIEW_LAYER_TIME
         case EViewType::LayerTimeLinear:
         case EViewType::LayerTimeLogarithmic: {
@@ -3732,6 +3734,7 @@ void GCodeViewer::render_legend(float& legend_height)
                       _u8L("Fan speed (%)"),
                       _u8L("Temperature (°C)"),
                       _u8L("Volumetric flow rate (mm³/s)"),
+                      _u8L("ATC layer batching"),
 #if ENABLE_PREVIEW_LAYER_TIME
                       _u8L("Layer time (linear)"),
                       _u8L("Layer time (logarithmic)"),
@@ -3752,6 +3755,8 @@ void GCodeViewer::render_legend(float& legend_height)
         append_headers({ _u8L(""), _u8L("Time"), _u8L("Percentage"), _u8L("Used filament") }, offsets);
     else if (m_view_type == EViewType::Tool)
         append_headers({ _u8L(""), _u8L("Used filament"), _u8L(""), _u8L("") }, offsets);
+    else if (m_view_type == EViewType::ATCLayerBatching)
+        append_headers({ _u8L(""), _u8L("Batch number"), _u8L(""), _u8L("") }, offsets);
     else
         ImGui::Separator();
 #else
@@ -3826,6 +3831,7 @@ void GCodeViewer::render_legend(float& legend_height)
     case EViewType::Feedrate:             { append_range(m_extrusions.ranges.feedrate, 1); break; }
     case EViewType::FanSpeed:             { append_range(m_extrusions.ranges.fan_speed, 0); break; }
     case EViewType::Temperature:          { append_range(m_extrusions.ranges.temperature, 0); break; }
+    case EViewType::ATCLayerBatching:     { append_range(m_extrusions.ranges.atc_batching, 0); break; }
     case EViewType::VolumetricRate:       { append_range(m_extrusions.ranges.volumetric_rate, 3); break; }
 #if ENABLE_PREVIEW_LAYER_TIME
     case EViewType::LayerTimeLinear:      { append_time_range(m_extrusions.ranges.layer_time[static_cast<size_t>(m_time_estimate_mode)], Extrusions::Range::EType::Linear); break; }
