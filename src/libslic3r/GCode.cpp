@@ -3307,6 +3307,12 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     this->layer_batch_labeling(print);
     this->ATC_plan_wipe_toolchange(print);
 
+    std::cout << "\n********** atc_process_layers ************" << std::endl; 
+    std::cout << "********** FINAL MAP ************\n" << std::endl;
+    std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
+    this->ATC_printing_map.display(this->ATC_printing_map.gethead());
+    std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
+
 
     std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
     print.get_ATC_printing_map().display(print.get_ATC_printing_map().gethead());
@@ -3400,8 +3406,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                 // Transition from 1st to 2nd layer. Adjust nozzle temperatures as prescribed by the nozzle dependent first_layer_temperature vs temperature settings.
                 for (const Extruder& extruder : m_writer.extruders()) {
                     if (print.config().single_extruder_multi_material.value && extruder.id() != m_writer.extruder()->id())
-                        // In single extruder multi material mode, set the temperature for the current extruder only.
-                        continue;
+                        continue; // In single extruder multi material mode, set the temperature for the current extruder only.
                     int temperature = print.config().temperature.get_at(extruder.id());
                     if (temperature > 0 && temperature != print.config().first_layer_temperature.get_at(extruder.id()))
                         gcode_string += m_writer.set_temperature(temperature, false, extruder.id());

@@ -3923,6 +3923,7 @@ void GCodeProcessor::store_move_vertex(EMoveType type)
         m_mm3_per_mm,
         m_fan_speed,
         m_extruder_temps[m_extruder_id],
+        m_atc_batch_number,
 #if ENABLE_PROCESS_G2_G3_LINES
         static_cast<float>(m_result.moves.size()),
         internal_only

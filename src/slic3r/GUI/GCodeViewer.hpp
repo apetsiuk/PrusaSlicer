@@ -207,7 +207,7 @@ class GCodeViewer
         float feedrate{ 0.0f };
         float fan_speed{ 0.0f };
         float temperature{ 0.0f };
-        //float atc_batching{ 0.0f };
+        float atc_batching{ 0.0f };
         float volumetric_rate{ 0.0f };
         unsigned char extruder_id{ 0 };
         unsigned char cp_color_id{ 0 };

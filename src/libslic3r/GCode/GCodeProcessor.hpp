@@ -118,6 +118,7 @@ namespace Slic3r {
             float mm3_per_mm{ 0.0f };
             float fan_speed{ 0.0f }; // percentage
             float temperature{ 0.0f }; // Celsius degrees
+            float atc_batching{ 0.0f }; // ATC Tool Clustering
             float time{ 0.0f }; // s
 #if ENABLE_PROCESS_G2_G3_LINES
             bool internal_only{ false };
@@ -540,6 +541,8 @@ namespace Slic3r {
         unsigned int m_line_id;
         unsigned int m_last_line_id;
         float m_feedrate; // mm/s
+        // ATC tool clustering
+        float m_atc_batch_number; // atc batch number
         struct FeedMultiply
         {
             float current; // percentage
