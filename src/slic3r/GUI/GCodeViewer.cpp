@@ -887,6 +887,8 @@ void GCodeViewer::refresh(const GCodeProcessorResult& gcode_result, const std::v
             m_extrusions.ranges.width.update_from(round_to_bin(curr.width));
             m_extrusions.ranges.fan_speed.update_from(curr.fan_speed);
             m_extrusions.ranges.temperature.update_from(curr.temperature);
+            // ATC batching
+            m_extrusions.ranges.atc_batching.update_from(curr.atc_batching);
             if (curr.extrusion_role != erCustom || is_visible(erCustom))
                 m_extrusions.ranges.volumetric_rate.update_from(round_to_bin(curr.volumetric_rate()));
             [[fallthrough]];
@@ -2433,7 +2435,8 @@ void GCodeViewer::refresh_render_paths(bool keep_sequential_current_first, bool 
         case EViewType::FanSpeed:       { color = m_extrusions.ranges.fan_speed.get_color_at(path.fan_speed); break; }
         case EViewType::Temperature:    { color = m_extrusions.ranges.temperature.get_color_at(path.temperature); break; }
         // instead of 12 should be a batch number // check struct Path in GCodeViewer.hpp
-        case EViewType::ATCLayerBatching: { color = m_extrusions.ranges.atc_batching.get_color_at(132); break; } 
+        //case EViewType::ATCLayerBatching: { color = m_extrusions.ranges.atc_batching.get_color_at(132); break; } 
+        case EViewType::ATCLayerBatching: { color = m_extrusions.ranges.atc_batching.get_color_at(path.atc_batching); break; }
 #if ENABLE_PREVIEW_LAYER_TIME
         case EViewType::LayerTimeLinear:
         case EViewType::LayerTimeLogarithmic: {

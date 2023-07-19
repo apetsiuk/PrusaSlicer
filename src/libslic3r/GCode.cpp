@@ -913,8 +913,23 @@ void GCode::do_batched_export(Print* print, const char* path, GCodeProcessorResu
     }
 
     BOOST_LOG_TRIVIAL(debug) << "Start processing gcode, " << log_memory_info();
+
+    // Assign bath numbers to GCodeProcessor for color visualization
+    //m_processor.atc_assign_batch_numbers(gcode);
+    //for (GCodeProcessorResult::MoveVertex& move : m_result.moves)
+    //this->ATC_printing_map.get_node(0);
+    //m_processor.get_result().moves[9].atc_batching = 103;
+    for (GCodeProcessorResult::MoveVertex& move : result->moves)
+    {
+        if (move.type == EMoveType::Extrude) {
+            move.atc_batching = 52;
+        }
+    }
+    result->moves[0].atc_batching = 103;
+
     // Post-process the G-code to update time stamps.
     m_processor.finalize(true);
+    
     //    DoExport::update_print_estimated_times_stats(m_processor, print->m_print_statistics);
     DoExport::update_print_estimated_stats(m_processor, m_writer.extruders(), print->m_print_statistics);
     if (result != nullptr) {

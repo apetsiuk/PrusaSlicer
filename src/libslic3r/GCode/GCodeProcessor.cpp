@@ -1222,6 +1222,7 @@ void GCodeProcessor::reset()
     m_line_id = 0;
     m_last_line_id = 0;
     m_feedrate = 0.0f;
+    m_atc_batch_number = 0.0f;
     m_feed_multiply.reset();
     m_width = 0.0f;
     m_height = 0.0f;
@@ -1373,6 +1374,11 @@ void GCodeProcessor::finalize(bool perform_post_process)
             move.width = Wipe_Width;
             move.height = Wipe_Height;
         }
+
+        if (move.type == EMoveType::Extrude) {
+            move.atc_batching = 52;
+        }
+
     }
 
     // process the time blocks
