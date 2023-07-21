@@ -919,13 +919,17 @@ void GCode::do_batched_export(Print* print, const char* path, GCodeProcessorResu
     //for (GCodeProcessorResult::MoveVertex& move : m_result.moves)
     //this->ATC_printing_map.get_node(0);
     //m_processor.get_result().moves[9].atc_batching = 103;
+
+    /*
     for (GCodeProcessorResult::MoveVertex& move : result->moves)
     {
         if (move.type == EMoveType::Extrude) {
             move.atc_batching = 52;
         }
     }
-    result->moves[0].atc_batching = 103;
+    result->moves[30].atc_batching = 103;
+    result->moves[40].atc_batching = 35;
+    */
 
     // Post-process the G-code to update time stamps.
     m_processor.finalize(true);
@@ -3241,6 +3245,7 @@ void GCode::layer_batch_labeling(Print& print)
 
 
 
+// wipe tower as a single brick
 void GCode::ATC_plan_wipe_toolchange(Print& print)
 {
     std::cout << "\n\n\nvoid GCode::ATC_plan_wipe_toolchange()\n\n\n" << std::endl;
@@ -3260,10 +3265,10 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
 
     // wiping parameters
     //bool need_wipe = true;
-    float atc_wiping_volume = 140.0;
+    float atc_wiping_volume = 140.0; // hardcoded for now
     size_t atc_old_tool;
     size_t atc_new_tool;
-    float atc_wiping_layer_height = 0.2;
+    float atc_wiping_layer_height = 0.2; // hardcoded for now
     size_t atc_wipe_tower_idx = 0;
     float atc_print_z;
 
@@ -3311,6 +3316,85 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
 
 }
 
+// wipe tower width (# of transition bricks) depends on # of colors
+void GCode::ATC_plan_wipe_toolchange2(Print& print)
+{
+    std::cout << "\n\n\nvoid GCode::ATC_plan_wipe_toolchange()\n\n\n" << std::endl;
+    // create atc_wipe_tower
+    std::vector<float> wiping_matrix(cast<float>(print.m_config.wiping_volumes_matrix.values));
+    std::vector<std::vector<float>> wipe_volumes;
+    const unsigned int number_of_extruders = (unsigned int)(sqrt(wiping_matrix.size()) + EPSILON);
+    for (unsigned int i = 0; i < number_of_extruders; ++i)
+        wipe_volumes.push_back(std::vector<float>(wiping_matrix.begin() + i * number_of_extruders, wiping_matrix.begin() + (i + 1) * number_of_extruders));
+
+    print.m_ATC_wipe_tower_data.tool_ordering = ToolOrdering(print, (unsigned int)-1, true);
+
+    WipeTower atc_wipe_tower(print.m_config, wipe_volumes, print.m_ATC_wipe_tower_data.tool_ordering.first_extruder());
+    for (size_t i = 0; i < number_of_extruders; ++i)
+        atc_wipe_tower.set_extruder(i, print.m_config);
+
+    // wiping parameters
+    int atc_wipe_plan_total_bricks = print.get_object(0)->all_regions().size()-1; // max number of colors - 1
+    int atc_wipe_plan_brick_idx = -1; // iterator over the bricks, starts with -1
+    int atc_wipe_plan_layer = 1; // start building wipe tower with layer 1 (0.2 mm)
+
+    float atc_wiping_volume = 140.0; // hardcoded for now
+    size_t atc_old_tool;
+    size_t atc_new_tool;
+    float atc_wiping_layer_height = 0.2; // hardcoded for now
+    size_t atc_wipe_tower_idx = 0;
+    float atc_print_z;
+
+    // building wiping tool changes
+    print.m_ATC_wipe_tower_data.clear();
+    // iterate over the printing pieces
+    struct printing_piece_UPD* printing_node;
+    int prev_region_idx = 0;
+    for (int printing_node_idx = 0; printing_node_idx < ATC_printing_map.get_count(); printing_node_idx++)
+    {
+        printing_node = ATC_printing_map.get_node(printing_node_idx);
+        int print_Rlayer_idx = printing_node->Rlayer;
+        int print_Blayer_idx = printing_node->Blayer;
+        int print_region_idx = printing_node->region;
+
+        std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
+
+        if (print_Blayer_idx != -1)
+        {
+            if (print_region_idx != prev_region_idx)
+            {
+                std::cout << "wipe tower here" << std::endl;
+                atc_wipe_tower_idx += 1;
+                atc_wipe_plan_brick_idx += 1;
+                atc_old_tool = prev_region_idx;
+                atc_new_tool = print_region_idx;
+                //atc_print_z = atc_wiping_layer_height * atc_wipe_tower_idx;
+                atc_print_z = atc_wiping_layer_height * atc_wipe_plan_layer;
+                // printing_node->need_wipe = true;
+                ATC_printing_map.get_node(printing_node_idx - 1)->need_wipe = true; // wipe before the tool change
+                if (atc_wipe_plan_brick_idx >= atc_wipe_plan_total_bricks - 1)
+                {
+                    atc_wipe_plan_brick_idx = -1;
+                    atc_wipe_plan_layer += 1;
+                }
+
+                atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
+                std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+            }
+            prev_region_idx = print_region_idx;
+            std::cout << "\n===================================\n\n\n" << std::endl;
+            std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
+            std::cout << "\n\n\n===================================\n" << std::endl;
+        }
+    }
+
+    print.m_ATC_wipe_tower_data.tool_changes.reserve(atc_wipe_tower_idx + 1);
+    atc_wipe_tower.generate(print.m_ATC_wipe_tower_data.tool_changes);
+    std::cout << "\n\n\ncheck size = " << print.m_ATC_wipe_tower_data.tool_changes.size() << std::endl;
+    std::cout << "\n\n# of TC = " << atc_wipe_tower_idx << std::endl;
+    std::cout << "\n\n\nEND of void GCode::ATC_plan_wipe_toolchange2()\n\n\n" << std::endl;
+}
+
 
 
 
@@ -3320,7 +3404,7 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
 void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, GCodeOutputStream& output_stream)
 {
     this->layer_batch_labeling(print);
-    this->ATC_plan_wipe_toolchange(print);
+    this->ATC_plan_wipe_toolchange2(print);
 
     std::cout << "\n********** atc_process_layers ************" << std::endl; 
     std::cout << "********** FINAL MAP ************\n" << std::endl;
@@ -3338,7 +3422,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     std::vector<GCode::LayerToPrint> layers_to_print = GCode::collect_layers_to_print(*print.m_objects[0]);
     struct printing_piece_UPD* printing_node;
     unsigned int atc_wiping_layer_idx = 0;
-
+    int atc_wiping_brick_idx = -1; // for multiple bricks tower
 
     //for (size_t printing_node_idx = 0; printing_node_idx < print.m_ATC_printing_map.get_count(); printing_node_idx++)
     for (size_t printing_node_idx = 0; printing_node_idx < this->ATC_printing_map.get_count(); printing_node_idx++)
@@ -3755,6 +3839,28 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
         
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
 
+        // for a multiple-brick wipe tower
+        if (printing_node->need_wipe)
+        {
+            atc_wiping_brick_idx += 1;
+            //if (atc_wiping_brick_idx > print.atc_wipe_tower_data.tool_changes[atc_wiping_layer_idx].size()) break;
+            output_stream.write(m_wipe_tower->append_tcr(*this,
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][atc_wiping_brick_idx],
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][atc_wiping_brick_idx].new_tool,
+                print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][atc_wiping_brick_idx].print_z));
+
+
+            // # of bricks = max number of colors - 1
+            if (atc_wiping_brick_idx >= print.get_object(0)->all_regions().size() - 2) // # of bricks - 1 = max number of colors - 2
+            {
+                atc_wiping_layer_idx += 1;
+                atc_wiping_brick_idx = -1;
+            }
+
+        }
+
+        // for a single-brick wipe tower
+        /*
         if (printing_node->need_wipe)
         {
             output_stream.write(m_wipe_tower->append_tcr(*this,
@@ -3763,6 +3869,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                 print.m_ATC_wipe_tower_data.tool_changes[atc_wiping_layer_idx][0].print_z));
             atc_wiping_layer_idx += 1;
         }
+        */
     }
 }
 

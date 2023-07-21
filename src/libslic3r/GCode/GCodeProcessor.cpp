@@ -1375,9 +1375,11 @@ void GCodeProcessor::finalize(bool perform_post_process)
             move.height = Wipe_Height;
         }
 
+        /*
         if (move.type == EMoveType::Extrude) {
             move.atc_batching = 52;
         }
+        */
 
     }
 
