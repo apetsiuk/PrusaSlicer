@@ -521,7 +521,10 @@ namespace Slic3r {
             }
         };
 #endif // ENABLE_GCODE_VIEWER_DATA_CHECKING
-
+        
+    public:
+        // ATC tool clustering
+        float m_atc_batch_number; // atc batch number
     private:
         GCodeReader m_parser;
 
@@ -541,8 +544,7 @@ namespace Slic3r {
         unsigned int m_line_id;
         unsigned int m_last_line_id;
         float m_feedrate; // mm/s
-        // ATC tool clustering
-        float m_atc_batch_number; // atc batch number
+        
         struct FeedMultiply
         {
             float current; // percentage

@@ -1380,6 +1380,7 @@ void GCodeProcessor::finalize(bool perform_post_process)
             move.atc_batching = 52;
         }
         */
+        //move.atc_batching = m_atc_batch_number;
 
     }
 

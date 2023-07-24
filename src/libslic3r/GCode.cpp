@@ -3436,6 +3436,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             << ", current_extruder_idx=" << current_extruder_idx
             << std::endl;
 
+        float atc_batch_number_in_the_cycle = printing_node->batch;
 
         GCode::LayerResult my_atc_piece_result;
         GCode::LayerToPrint& layer_to_print = layers_to_print[print_layer_idx];
@@ -3836,7 +3837,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             //return result;
         }
         
-        
+        m_processor.m_atc_batch_number = atc_batch_number_in_the_cycle;
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
 
         // for a multiple-brick wipe tower
