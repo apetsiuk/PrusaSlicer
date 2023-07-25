@@ -208,6 +208,7 @@ class GCodeViewer
         float fan_speed{ 0.0f };
         float temperature{ 0.0f };
         float atc_batching{ 0.0f };
+        float atc_critical_intersection{ 0.0f };
         float volumetric_rate{ 0.0f };
         unsigned char extruder_id{ 0 };
         unsigned char cp_color_id{ 0 };
@@ -478,6 +479,8 @@ class GCodeViewer
             Range temperature;
             // Color mapping by ATC batch number.
             Range atc_batching;
+            // Color mapping for ATC critical region intersection
+            Range atc_critical_intersection;
 #if ENABLE_PREVIEW_LAYER_TIME
             // Color mapping by layer time.
             std::array<Range, static_cast<size_t>(PrintEstimatedStatistics::ETimeMode::Count)> layer_time;
@@ -491,6 +494,7 @@ class GCodeViewer
                 volumetric_rate.reset();
                 temperature.reset();
                 atc_batching.reset();
+                atc_critical_intersection.reset();
 #if ENABLE_PREVIEW_LAYER_TIME
                 for (auto& range : layer_time) {
                     range.reset();
@@ -752,6 +756,7 @@ public:
         Temperature,
         VolumetricRate,
         ATCLayerBatching,
+        ATCCriticalIntersection,
 #if ENABLE_PREVIEW_LAYER_TIME
         LayerTimeLinear,
         LayerTimeLogarithmic,

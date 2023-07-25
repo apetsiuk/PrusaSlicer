@@ -1223,6 +1223,7 @@ void GCodeProcessor::reset()
     m_last_line_id = 0;
     m_feedrate = 0.0f;
     m_atc_batch_number = 0.0f;
+    m_atc_critical_intersection = 0.0f;
     m_feed_multiply.reset();
     m_width = 0.0f;
     m_height = 0.0f;
@@ -3933,6 +3934,7 @@ void GCodeProcessor::store_move_vertex(EMoveType type)
         m_fan_speed,
         m_extruder_temps[m_extruder_id],
         m_atc_batch_number,
+        m_atc_critical_intersection,
 #if ENABLE_PROCESS_G2_G3_LINES
         static_cast<float>(m_result.moves.size()),
         internal_only

@@ -3836,6 +3836,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             my_atc_piece_result.cooling_buffer_flush = object_layer || raft_layer || last_layer;
             //return result;
         }
+
+        m_processor.m_atc_critical_intersection = atc_batch_number_in_the_cycle/3;
         
         m_processor.m_atc_batch_number = atc_batch_number_in_the_cycle;
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
