@@ -143,7 +143,7 @@ struct printing_piece_UPD {
     int batch;
     bool need_wipe;
 
-    double intersection_self;
+    float region_intersection;
     //float intersection_ext;
     //float intersection_void;
     printing_piece_UPD* next;
@@ -161,7 +161,7 @@ public:
         tail = NULL;
     }
 
-    void append_node(size_t number, float print_z, bool object, bool support, int Rlayer, int Blayer, int region, bool state, int batch, bool need_wipe, double intersection_self)
+    void append_node(size_t number, float print_z, bool object, bool support, int Rlayer, int Blayer, int region, bool state, int batch, bool need_wipe, float region_intersection)
     {
         printing_piece_UPD* tmp = new printing_piece_UPD;
         tmp->number = number;
@@ -174,7 +174,7 @@ public:
         tmp->state = state;
         tmp->batch = batch;
         tmp->need_wipe = need_wipe;
-        tmp->intersection_self = intersection_self;
+        tmp->region_intersection = region_intersection;
         tmp->next = NULL;
 
         if (head == NULL)
@@ -212,7 +212,7 @@ public:
                 << ", R" << head->region << "}"
                 << "--b" << head->batch
                 << "--w" << head->need_wipe
-                << "--int_self=" << head->intersection_self
+                << "--region_int=" << head->region_intersection
                 << std::endl;
             display(head->next);
         }

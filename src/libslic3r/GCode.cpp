@@ -2897,7 +2897,7 @@ void GCode::layer_batch_labeling(Print& print)
                         state, // node processed state
                         batch, // batch
                         need_wipe, // wiping layer
-                        0 // intersection_self
+                        0 // region_intersection
                     );
                     atc_map_number += 1;
                 }
@@ -2921,7 +2921,7 @@ void GCode::layer_batch_labeling(Print& print)
                 false, // node processed state
                 -1, // batch
                 need_wipe, // wiping layer
-                0 // intersection_self
+                0 // region_intersection
             );
             atc_map_number += 1;
         }
@@ -3046,7 +3046,7 @@ void GCode::layer_batch_labeling(Print& print)
                 std::cout << "checking intersections for {L" << current_Blayer_idx << ", R" << color << "}: region_intersection=" << region_intersection << std::endl;
                 if (color == current_region_idx)
                 {
-                    intersection_self = region_intersection;
+                    intersection_self = 0;
                 }
                 if (printing_map_initial.node_search(printing_map_initial.gethead(), current_Blayer_idx, color))
                 {
@@ -3076,7 +3076,7 @@ void GCode::layer_batch_labeling(Print& print)
                                 1, // state = 1
                                 batch_new,
                                 need_wipe,
-                                intersection_self
+                                region_intersection
                             );
 
                             atc_appending_node_number += 1;
@@ -3189,7 +3189,7 @@ void GCode::layer_batch_labeling(Print& print)
             false, // node processed state
             obj_temp_piece->batch, // batch
             obj_temp_piece->need_wipe, // need_wipe
-            obj_temp_piece->intersection_self
+            obj_temp_piece->region_intersection
         );
         atc_final_map_counter += 1;
 
@@ -3215,7 +3215,7 @@ void GCode::layer_batch_labeling(Print& print)
                         false, // node processed state
                         obj_temp_piece->batch, // batch
                         obj_temp_piece->need_wipe, // need_wipe
-                        obj_temp_piece->intersection_self
+                        obj_temp_piece->region_intersection
                     );
                     atc_final_map_counter += 1;
                     supp_temp_piece->state = 1;
@@ -3437,6 +3437,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             << std::endl;
 
         float atc_batch_number_in_the_cycle = printing_node->batch;
+        float atc_region_intersection_in_the_cycle = printing_node->region_intersection;
 
         GCode::LayerResult my_atc_piece_result;
         GCode::LayerToPrint& layer_to_print = layers_to_print[print_layer_idx];
@@ -3837,7 +3838,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
             //return result;
         }
 
-        m_processor.m_atc_critical_intersection = atc_batch_number_in_the_cycle/3;
+        m_processor.m_atc_critical_intersection = atc_region_intersection_in_the_cycle;
         
         m_processor.m_atc_batch_number = atc_batch_number_in_the_cycle;
         output_stream.write(my_atc_piece_result.gcode); // gcode for a single color piece
