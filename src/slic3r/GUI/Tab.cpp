@@ -1469,7 +1469,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("atc_extruders_z_jump");
 
         optgroup = page->new_optgroup(L("ATC wipe tower (experimental)"));
-        optgroup->append_single_option_line("atc_enable_wipe_tower");
+        optgroup->append_single_option_line("atc_wiping_volume");
     // ---------------------------
 
     page = add_options_page(L("Infill"), "infill");

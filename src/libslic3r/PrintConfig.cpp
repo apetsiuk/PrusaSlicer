@@ -406,9 +406,9 @@ void PrintConfigDef::init_fff_params()
     def = this->add("atc_critical_intersection_area", coFloat);
     def->label = L("Max color intersection area");
     def->tooltip = L("Enter your experimentsl max intersection coefficient.");
-    def->sidetext = L("mm²");
+    def->sidetext = L("units");
     def->min = 0.1;
-    def->max = 100;
+    def->max = 1000;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat{ 0.5 });
 
@@ -422,12 +422,15 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat{ 1.6 });
 
-    // enable ATC wipe tower: bool checkbox
-    def = this->add("atc_enable_wipe_tower", coBool);
-    def->label = L("Enable ATC wipe tower");
-    def->tooltip = L("This feature will enable the experimental ATC wipe tower generation.");
-    def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionBool(false));
+    // ATC wiping volume (Prusa default is 140.0)
+    def = this->add("atc_wiping_volume", coFloat);
+    def->label = L("ATC wiping volume");
+    def->tooltip = L("Wiping volume for any toolchange.");
+    def->sidetext = L("units");
+    def->min = 100;
+    def->max = 500;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionFloat(140));
 
     //----------------------------------------------------------------
 

@@ -3265,7 +3265,7 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
 
     // wiping parameters
     //bool need_wipe = true;
-    float atc_wiping_volume = 140.0; // hardcoded for now
+    float atc_wiping_volume = 320.0; // 140 hardcoded for now
     size_t atc_old_tool;
     size_t atc_new_tool;
     float atc_wiping_layer_height = 0.2; // hardcoded for now
@@ -3338,7 +3338,10 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
     int atc_wipe_plan_brick_idx = -1; // iterator over the bricks, starts with -1
     int atc_wipe_plan_layer = 1; // start building wipe tower with layer 1 (0.2 mm)
 
-    float atc_wiping_volume = 140.0; // hardcoded for now
+    //float atc_wiping_volume = print.m_config.option<ConfigOptionFloat>("atc_wiping_volume")->value; // hardcoded for now (140.0 default)
+    float atc_wiping_volume = print.m_objects[0]->config().atc_wiping_volume;
+    
+
     size_t atc_old_tool;
     size_t atc_new_tool;
     float atc_wiping_layer_height = 0.2; // hardcoded for now
@@ -3820,8 +3823,19 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                     }
                     for (GCode::ObjectByExtruder::Island& island : instance_to_print.object_by_extruder.islands) {
                         const auto& by_region_specific = is_anything_overridden ? island.by_region_per_copy(by_region_per_copy_cache, static_cast<unsigned int>(instance_to_print.instance_id), current_extruder_idx, print_wipe_extrusions != 0) : island.by_region;
-                        gcode_string += extrude_infill(print, by_region_specific, false);
-                        gcode_string += extrude_perimeters(print, by_region_specific);
+                        //gcode_string += extrude_infill(print, by_region_specific, false);
+                        //gcode_string += extrude_perimeters(print, by_region_specific);
+
+                        if (print.config().infill_first) {
+                            gcode_string += extrude_infill(print, by_region_specific, false);
+                            gcode_string += extrude_perimeters(print, by_region_specific);
+                        }
+                        else {
+                            gcode_string += extrude_perimeters(print, by_region_specific);
+                            gcode_string += extrude_infill(print, by_region_specific, false);
+                        }
+
+
                         std::cout << "~~~ EXTRUDE INFILL AND PERIMETERS" << std::endl;
                     }
                 }
