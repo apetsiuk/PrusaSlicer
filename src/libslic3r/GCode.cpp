@@ -2879,30 +2879,65 @@ void GCode::layer_batch_labeling(Print& print)
     bool state = false; // initially all nodes are not processed
     int batch = 0; // initial batch is zero
     size_t atc_map_number = 0;
+
+    float atc_region_order_flip = 1;
+
+
     for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
         if (layers_to_print_ATC[RL].object_layer != NULL)
         {
-            for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
+            
+            if (atc_region_order_flip > 0)
             {
-                if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
                 {
-                    printing_map_initial.append_node(
-                        atc_map_number, // consecutive number
-                        layers_to_print_ATC[RL].object_layer->print_z, // print_z
-                        true, // object layer
-                        false, // support layer
-                        RL, // layer,
-                        BL, // batch layer
-                        R,  // region
-                        state, // node processed state
-                        batch, // batch
-                        need_wipe, // wiping layer
-                        0 // region_intersection
-                    );
-                    atc_map_number += 1;
+                    if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                    {
+                        printing_map_initial.append_node(
+                            atc_map_number, // consecutive number
+                            layers_to_print_ATC[RL].object_layer->print_z, // print_z
+                            true, // object layer
+                            false, // support layer
+                            RL, // layer,
+                            BL, // batch layer
+                            R,  // region
+                            state, // node processed state
+                            batch, // batch
+                            need_wipe, // wiping layer
+                            0 // region_intersection
+                        );
+                        atc_map_number += 1;
+                    }
                 }
             }
+
+            if (atc_region_order_flip < 0)
+            {
+                for (int R = layers_to_print_ATC[RL].object_layer->regions().size()-1; R > -1 ; R--)
+                {
+                    if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                    {
+                        printing_map_initial.append_node(
+                            atc_map_number, // consecutive number
+                            layers_to_print_ATC[RL].object_layer->print_z, // print_z
+                            true, // object layer
+                            false, // support layer
+                            RL, // layer,
+                            BL, // batch layer
+                            R,  // region
+                            state, // node processed state
+                            batch, // batch
+                            need_wipe, // wiping layer
+                            0 // region_intersection
+                        );
+                        atc_map_number += 1;
+                    }
+                }
+            }
+
+            
             BL += 1;
+            atc_region_order_flip = atc_region_order_flip * (-1);
         }
     }
 
@@ -2939,6 +2974,7 @@ void GCode::layer_batch_labeling(Print& print)
     int atc_appending_node_number = 0;
     float atc_print_z = 0;
     double cum_layer_height = 0;
+    //float atc_batch_epsilon = 0.02; // in mm, additional batch height to make sure the batch size is a multiple of a layer height
     double atc_safe_height = print.m_objects[0]->config().atc_safe_batch_height.value; // 0.4 default value in mm
     double atc_running_height = 0; // check it more thoroughly at the later stages
     int batch_new = 0;
