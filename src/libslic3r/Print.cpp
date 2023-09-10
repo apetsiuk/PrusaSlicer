@@ -1249,6 +1249,7 @@ void Print::ATC_plan_wipe_toolchange() {
     // iterate over the printing pieces
     struct ATC_printing_piece* printing_node;
     int prev_region_idx = 0;
+    size_t atc_tool_change_counter = 0;
     for (int printing_node_idx = 0; printing_node_idx < m_ATC_printing_map.get_count(); printing_node_idx++)
     {
         printing_node = m_ATC_printing_map.get_node(printing_node_idx);
@@ -1269,6 +1270,7 @@ void Print::ATC_plan_wipe_toolchange() {
 
             atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
             std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+            atc_tool_change_counter += 1;
         }
         prev_region_idx = print_region_idx;
         std::cout << "\n===================================\n\n\n" << std::endl;
@@ -1279,6 +1281,8 @@ void Print::ATC_plan_wipe_toolchange() {
     m_ATC_wipe_tower_data.tool_changes.reserve(atc_wipe_tower_idx + 1);
     atc_wipe_tower.generate(m_ATC_wipe_tower_data.tool_changes);
     std::cout << "\n\n\ncheck size = " << m_ATC_wipe_tower_data.tool_changes.size() << std::endl;
+    //m_ATC_wipe_tower_data.number_of_toolchanges = atc_tool_change_counter;
+    //std::cout << "m_ATC_wipe_tower_data.number_of_toolchanges = " << atc_tool_change_counter << std::endl;
 
     
     /*

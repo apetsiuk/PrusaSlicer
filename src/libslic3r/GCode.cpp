@@ -2142,11 +2142,17 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
     file.write(DoExport::update_print_stats_and_format_filament_stats(
         // Const inputs
         has_wipe_tower, print.wipe_tower_data(),
+        // ---here you can update your ATC stats:
+        //has_wipe_tower, print.m_ATC_wipe_tower_data,
+        
         this->config(),
         m_writer.extruders(),
         initial_extruder_id,
         // Modifies
         print.m_print_statistics));
+
+    print.m_print_statistics.total_toolchanges = print.m_ATC_wipe_tower_data.number_of_toolchanges;
+
     file.write("\n");
     file.write_format("; total filament used [g] = %.2lf\n", print.m_print_statistics.total_weight);
     file.write_format("; total filament cost = %.2lf\n", print.m_print_statistics.total_cost);
@@ -3389,6 +3395,7 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
     // iterate over the printing pieces
     struct printing_piece_UPD* printing_node;
     int prev_region_idx = 0;
+    size_t atc_tool_change_counter = 0;
     for (int printing_node_idx = 0; printing_node_idx < ATC_printing_map.get_count(); printing_node_idx++)
     {
         printing_node = ATC_printing_map.get_node(printing_node_idx);
@@ -3419,6 +3426,7 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
 
                 atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
                 std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+                atc_tool_change_counter += 1;
             }
             prev_region_idx = print_region_idx;
             std::cout << "\n===================================\n\n\n" << std::endl;
@@ -3431,6 +3439,8 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
     atc_wipe_tower.generate(print.m_ATC_wipe_tower_data.tool_changes);
     std::cout << "\n\n\ncheck size = " << print.m_ATC_wipe_tower_data.tool_changes.size() << std::endl;
     std::cout << "\n\n# of TC = " << atc_wipe_tower_idx << std::endl;
+    print.m_ATC_wipe_tower_data.number_of_toolchanges = atc_tool_change_counter;
+    std::cout << "print.m_ATC_wipe_tower_data.number_of_toolchanges = " << atc_tool_change_counter << std::endl;
     std::cout << "\n\n\nEND of void GCode::ATC_plan_wipe_toolchange2()\n\n\n" << std::endl;
 }
 
@@ -3447,12 +3457,12 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 
     std::cout << "\n********** atc_process_layers ************" << std::endl; 
     std::cout << "********** FINAL MAP ************\n" << std::endl;
-    std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
-    this->ATC_printing_map.display(this->ATC_printing_map.gethead());
+    //std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
+    //this->ATC_printing_map.display(this->ATC_printing_map.gethead());
     std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
 
 
-    std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
+    //std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
     print.get_ATC_printing_map().display(print.get_ATC_printing_map().gethead());
     // get to the generated wipe tower
     print.m_ATC_wipe_tower_data.tool_changes[0][0];
@@ -3470,10 +3480,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
         size_t print_layer_idx = printing_node->Rlayer;
         size_t print_region_idx = printing_node->region;
         unsigned int current_extruder_idx = print_region_idx;
-        std::cout << "~~~ NODE: print_layer_idx=" << print_layer_idx
-            << ", print_region_idx=" << print_region_idx
-            << ", current_extruder_idx=" << current_extruder_idx
-            << std::endl;
+        //std::cout << "~~~ NODE: print_layer_idx=" << print_layer_idx << ", print_region_idx=" << print_region_idx << ", current_extruder_idx=" << current_extruder_idx << std::endl;
 
         float atc_batch_number_in_the_cycle = printing_node->batch;
         float atc_region_intersection_in_the_cycle = printing_node->region_intersection;
@@ -3714,8 +3721,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 
             // =================== SUBSTITUTE for gcode->set_extruder(...) ====================
             //std::string GCode::set_extruder(unsigned int extruder_id, double print_z)
-            if (!m_writer.need_toolchange(current_extruder_idx))
-                std::cout << "return \"\";" << std::endl;
+            //if (!m_writer.need_toolchange(current_extruder_idx))
+                //std::cout << "return \"\";" << std::endl;
 
             // if we are running a single-extruder setup, just set the extruder and return nothing
             if (!m_writer.multiple_extruders) {
@@ -3872,7 +3879,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                         }
 
 
-                        std::cout << "~~~ EXTRUDE INFILL AND PERIMETERS" << std::endl;
+                        //std::cout << "~~~ EXTRUDE INFILL AND PERIMETERS" << std::endl;
                     }
                 }
             }
