@@ -2892,7 +2892,27 @@ void GCode::layer_batch_labeling(Print& print)
     for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
         if (layers_to_print_ATC[RL].object_layer != NULL)
         {
-            
+            for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
+            {
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                {
+                    printing_map_initial.append_node(
+                        atc_map_number, // consecutive number
+                        layers_to_print_ATC[RL].object_layer->print_z, // print_z
+                        true, // object layer
+                        false, // support layer
+                        RL, // layer,
+                        BL, // batch layer
+                        R,  // region
+                        state, // node processed state
+                        batch, // batch
+                        need_wipe, // wiping layer
+                        0 // region_intersection
+                    );
+                    atc_map_number += 1;
+                }
+            }
+            /*
             if (atc_region_order_flip > 0)
             {
                 for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
@@ -2940,7 +2960,7 @@ void GCode::layer_batch_labeling(Print& print)
                     }
                 }
             }
-
+            */
             
             BL += 1;
             atc_region_order_flip = atc_region_order_flip * (-1);
