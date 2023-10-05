@@ -1,9 +1,9 @@
 
 [wiki](https://github.com/apetsiuk/PrusaSlicer/wiki)
 
-<img align="left" width="240" alt="logo" src="_images/PrusaSlicer_batched3.png"/>
+<img align="left" width="140" alt="logo" src="_images/Prusa_logo_batched.png"/>
 
-# PrusaSlicer: Agglomerative Tool Clustering Fork (ATC, Interlayer color clustering)
+# PrusaSlicer: Interlayer Tool Clustering Fork
 
 The given fork introduces interlayer color clustering (tool aggregation) features. The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers.
 
@@ -14,83 +14,65 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 | <img width="340" src="_images/mario_regular.gif"/> | <img width="340" src="_images/mario_atc.gif"/>  |
 
 
-**The current fork only works with single-object FFF projects in the PrusaSlicer console version.**
-
-**To switch off the ATC version: change the "allow_layer_batching" variable to "false" (bool allow_layer_batching = false) in PrusaSlicer.cpp and rebuild the source.**
-
-
-### Usage 
-
-```
-cd C:\src\PrusaSlicer\build\src\Release
-prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
-```
 
 ----
 
+
 ### Added features
 
-- :white_check_mark: Interlayer agglomerative tool clustering
+- :white_check_mark: Interlayer tool clustering
 - :white_check_mark: Critical height tracking
 - :white_check_mark: Adjustable level of intersections between neighboring regions
-- :white_check_mark: Integrate control elements to visual GUI
+- :white_check_mark: GUI-integrated controls 
+- :white_check_mark: Updated wipe tower generation
+- :white_check_mark: Support clustering along with sliced layers 
+- :white_check_mark: Updated print statistics
+- :white_check_mark: Processed g-code visualization in GUI
+- :white_check_mark: Added slide bar for clustered g-code regions in GUI
+- :white_check_mark: Added slide bar for region intersections in GUI
 
 
 ### Features under development
-- :x: Wipe tower generation for new g-code version
-- :x: Support clustering along with sliced layers
-- :x: Generate updated print statistics
-- :x: Visualize processed g-code in GUI window
-- :x: Implement slide bar for clustered g-code regions in GUI
 
+- :x: Tool clustering for multi-object projects
+- :x: Adaptive region intersections
+- :x: Adaptive batch height
 
 
 ### Required slicing parameters
-- Disable skirt/brim (Print settings -> Skirt and brim -> Skirt -> Loops = 0)
-- Disable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> uncheck)
-- Enable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> check)
-- Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6 mm for each extruder)
-- Disable support
+
+- Enable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> check)
+- Disable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> uncheck)
+- Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6+ mm for each extruder)
 
 
-### Variables
+### New variables
 
 - `bool allow_layer_batching = true; // src/PrusaSlicer.cpp`
 - `double safe_height = 0.35; // in mm, src/libslic3r/Print.cpp`
 - `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp`
 - `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z`
 
-
-
-### Test 3MF object
-
-Below is an example of building an optimized printing map for a block consisting of three colors and seven layers (region 0 - yellow, region 1 - pink, region 2 - cyan), 8 layers, 1.60 mm height (constant 0.2 mm layer height).
-
-![intersection_test_4_8_layers_1_60mm](_images/intersection_test_4_8_layers_1_60mm.png)
-
-```
-Initial printing map (regulr printing):        Agglomerative tool clustering:
-{L0, R0}                                        {L0, R0}
-{L1, R0}                                        {L1, R0}
-{L2, R0}                                        {L2, R0}
-{L2, R1}                                        {L3, R0}
-{L3, R0}                                        {L2, R1}
-{L3, R1}                                        {L3, R1}
-{L3, R2}                                        {L4, R1}
-{L4, R0}                                        {L5, R1}
-{L4, R1}                                        {L3, R2}
-{L4, R2}                                        {L4, R2}
-{L5, R0}                                        {L5, R2}
-{L5, R1}                                        {L6, R2}
-{L5, R2}                                        {L4, R0}
-{L6, R0}                                        {L5, R0}
-{L6, R1}                                        {L6, R0}
-{L6, R2}                                        {L6, R1}
-{L7, R2}                                        {L7, R2}
-```
 ----
 
-Multicolor models to test
+
+### GUI controls
+
+<img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
+The main control variables are the allowable stack height of layers processed within a single material transition and the maximum allowable intersection with underlying areas of other colors.
+
+
+### Console (optional)
+
+```
+cd C:\src\PrusaSlicer\build\src\Release
+prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
+```
+
+
+----
+
+### Multicolor models to test
 - [Etta the Parrot](https://cults3d.com/en/3d-model/game/multi-color-parrot-remix-mosaicmanufacturing)
 - [Two Color World](https://cults3d.com/en/3d-model/various/multi-color-world-with-stand)
 - [Orange Coaster](https://cults3d.com/en/3d-model/home/multi-color-citrus-coaster)
@@ -116,7 +98,7 @@ Multicolor models to test
 Added private members and methods to Slic3r::Layer and Slic3r::Print objects.
 
 
-<img src="_images/print_object.png"/>
+<img src="_images/classes_relation.png"/>
 
 
 ----
