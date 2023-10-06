@@ -1,21 +1,21 @@
 
 [wiki](https://github.com/apetsiuk/PrusaSlicer/wiki)
 
-<img align="left" width="140" alt="logo" src="_images/Prusa_logo_batched.png"/>
+<img align="left" width="100" alt="logo" src="_images/Prusa_logo_batched.png"/>
 
 # PrusaSlicer: Interlayer Tool Clustering Fork
+### Use less material (1.7x), time and energy (1.4x)* 
+
+*\***Paper:** A. Petsiuk, B. Bloch, D. Vogt, M. Debora, J.M. Pearce, 2023, "Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer  tool clustering". [[arXiv]](https://github.com/apetsiuk/PrusaSlicer/wiki)*
 
 The given fork introduces interlayer color clustering (tool aggregation) features. The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers.
 
 
-| **Regular printing** | **After ATC processing**   |
+| **Regular printing** | **After tool clustering**   |
 | :---:   | :---: |
 | <img width="340" src="_images/int_regular.gif"/> | <img width="340" src="_images/int_atc.gif"/>  |
 | <img width="340" src="_images/mario_regular.gif"/> | <img width="340" src="_images/mario_atc.gif"/>  |
-
-
-
-----
+| <img width="340" src="_images/mario_default_feature_time.png"/> | <img width="340" src="_images/mario_default_atc_time.png"/>  |
 
 
 ### Added features
@@ -38,6 +38,31 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - :x: Adaptive region intersections
 - :x: Adaptive batch height
 
+### GUI controls
+
+<img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
+The main control variables are the allowable stack height of layers processed within a single material transition and the maximum allowable intersection with underlying areas of other colors.
+
+
+### Variable number of tool changes
+
+<img align="left" alt="gui_controls" src="_images/quality_samples1.png"/>
+The test model has a height of 20 mm and a layer size of 0.2 mm. B - batch size in number of layers, TC - number of tool changes.
+
+
+### Nozzle area during printing
+
+<img align="left" alt="gui_controls" src="_images/nozzle_closeup.png"/>
+Video of endoscope camera.
+
+
+### Printed samples
+
+<img align="left" alt="gui_controls" src="_images/printed_samples.png"/>
+
+
+----
+
 
 ### Required slicing parameters
 
@@ -53,22 +78,19 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - `double critical_intersection = 0.05; // unscaled units, src/libslic3r/Print.cpp`
 - `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z`
 
-----
 
-
-### GUI controls
-
-<img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
-The main control variables are the allowable stack height of layers processed within a single material transition and the maximum allowable intersection with underlying areas of other colors.
-
-
-### Console (optional)
+### Console usage (optional)
 
 ```
 cd C:\src\PrusaSlicer\build\src\Release
 prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
 ```
 
+### Colormap visualization
+
+<img align="left" alt="gui_controls" src="_images/colormap_sliders.png"/>
+
+Five-color source model (left), sliced material regions grouped into layer clusters (middle), critical region intersections (right).
 
 ----
 
