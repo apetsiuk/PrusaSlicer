@@ -4,21 +4,25 @@
 <img align="left" width="100" alt="logo" src="_images/Prusa_logo_batched.png"/>
 
 # PrusaSlicer: Interlayer Tool Clustering Fork
-### Use less material (1.7x), time and energy (1.4x)* 
+### Uses less material (1.7x), time and energy (1.4x)* 
 
-*\***Paper:** A. Petsiuk, B. Bloch, D. Vogt, M. Debora, J.M. Pearce, 2023, "Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer  tool clustering". [[arXiv]](https://github.com/apetsiuk/PrusaSlicer/wiki)*
+---
+
+>*\***Paper:** A. Petsiuk, B. Bloch, D. Vogt, M. Debora, J.M. Pearce, 2023, "Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer  tool clustering". [[arXiv]](https://github.com/apetsiuk/PrusaSlicer/wiki)*
+
+---
 
 The given fork introduces interlayer color clustering (tool aggregation) features. The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers.
 
 
-| **Regular printing** | **After tool clustering**   |
+| **Regular printing** | **Tool clustering**   |
 | :---:   | :---: |
 | <img width="340" src="_images/int_regular.gif"/> | <img width="340" src="_images/int_atc.gif"/>  |
 | <img width="340" src="_images/mario_regular.gif"/> | <img width="340" src="_images/mario_atc.gif"/>  |
 | <img width="340" src="_images/mario_default_feature_time.png"/> | <img width="340" src="_images/mario_default_atc_time.png"/>  |
 
 
-### Added features
+## Added features
 
 - :white_check_mark: Interlayer tool clustering
 - :white_check_mark: Critical height tracking
@@ -32,46 +36,51 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 - :white_check_mark: Added slide bar for region intersections in GUI
 
 
-### Features under development
+## Features under development
 
 - :x: Tool clustering for multi-object projects
 - :x: Adaptive region intersections
 - :x: Adaptive batch height
 
-### GUI controls
+## GUI controls
 
 <img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
 The main control variables are the allowable stack height of layers processed within a single material transition and the maximum allowable intersection with underlying areas of other colors.
 
+## Colormap visualization
 
-### Variable number of tool changes
+<img align="left" alt="gui_controls" src="_images/colormap_sliders.png"/>
+Five-color source model (left), sliced material regions grouped into layer clusters (middle), critical region intersections (right).
+
+
+## Variable number of tool changes
 
 <img align="left" alt="gui_controls" src="_images/quality_samples1.png"/>
 The test model has a height of 20 mm and a layer size of 0.2 mm. B - batch size in number of layers, TC - number of tool changes.
 
 
-### Nozzle area during printing
+## Nozzle area during printing
 
 <img align="left" alt="gui_controls" src="_images/nozzle_closeup.png"/>
 Video of endoscope camera.
 
 
-### Printed samples
+## Printed samples
 
 <img align="left" alt="gui_controls" src="_images/printed_samples.png"/>
-
+Various models printed using tool clustering.
 
 ----
 
 
-### Required slicing parameters
+## Required slicing parameters
 
 - Enable wipe tower (Print settings -> Multiple extruders -> Wipe tower -> Enable -> check)
 - Disable sequential printing (Print settings -> Output options -> Sequential printing -> Complete individual objects -> uncheck)
 - Extruder lift Z retraction (Printer settings -> Extruder X -> Retraction -> Lift Z = 1.6+ mm for each extruder)
 
 
-### New variables
+## New variables
 
 - `bool allow_layer_batching = true; // src/PrusaSlicer.cpp`
 - `double safe_height = 0.35; // in mm, src/libslic3r/Print.cpp`
@@ -79,22 +88,16 @@ Video of endoscope camera.
 - `m_print_config.option<ConfigOptionFloats>("retract_lift")->values[working_extruder_idx] = 4.0; // in mm, Lift Z`
 
 
-### Console usage (optional)
+## Console usage (optional)
 
 ```
 cd C:\src\PrusaSlicer\build\src\Release
 prusa-slicer-console --export-gcode --output filename.gcode filename.3mf
 ```
 
-### Colormap visualization
-
-<img align="left" alt="gui_controls" src="_images/colormap_sliders.png"/>
-
-Five-color source model (left), sliced material regions grouped into layer clusters (middle), critical region intersections (right).
-
 ----
 
-### Multicolor models to test
+## Multicolor models to test
 - [Etta the Parrot](https://cults3d.com/en/3d-model/game/multi-color-parrot-remix-mosaicmanufacturing)
 - [Two Color World](https://cults3d.com/en/3d-model/various/multi-color-world-with-stand)
 - [Orange Coaster](https://cults3d.com/en/3d-model/home/multi-color-citrus-coaster)
@@ -104,7 +107,7 @@ Five-color source model (left), sliced material regions grouped into layer clust
 - [Low Poly Squirtle](https://cults3d.com/en/3d-model/game/low-poly-squirtle-multi-and-dual-extrusion-version)
 
 
-### Modified files
+## Modified files
 
 - src/PrusaSlicer.cpp
 - src/libslic3r/Layer.hpp
@@ -129,7 +132,7 @@ Added private members and methods to Slic3r::Layer and Slic3r::Print objects.
 
 PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community. See the [project homepage](https://www.prusa3d.com/slic3r-prusa-edition/) and the [documentation directory](doc/) for more information.
 
-### Dependencies
+## Dependencies
 
 - [Boost](https://www.boost.org/)
 - [Eigen](https://eigen.tuxfamily.org/dox/GettingStarted.html)
@@ -141,7 +144,7 @@ PrusaSlicer is based on [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro
 
 
 
-### How to build?
+## How to build?
 
 [Linux](doc/How%20to%20build%20-%20Linux%20et%20al.md) | [macOS](doc/How%20to%20build%20-%20Mac%20OS.md) | [Windows](doc/How%20to%20build%20-%20Windows.md)
 
@@ -192,11 +195,11 @@ PrusaSlicer should start. You're up and running!
 
 
 
-### PrusaSlicer license
+## PrusaSlicer license
 
 PrusaSlicer is licensed under the _GNU Affero General Public License, version 3_.
 The PrusaSlicer is originally based on Slic3r by Alessandro Ranellucci.
 
-### Use PrusaSlicer from the command line
+## Use PrusaSlicer from the command line
 
 Please refer to the [Command Line Interface](https://github.com/prusa3d/PrusaSlicer/wiki/Command-Line-Interface) wiki page.
