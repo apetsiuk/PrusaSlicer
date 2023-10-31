@@ -3022,6 +3022,8 @@ void GCode::layer_batch_labeling(Print& print)
     node = NULL;
     struct printing_piece_UPD* last_node;
     last_node = NULL;
+    struct printing_piece_UPD* last_appended_node;
+    last_appended_node = NULL;
     struct printing_piece_UPD* candidate_node;
     candidate_node = NULL;
     int overall_intersections_below = 0;
