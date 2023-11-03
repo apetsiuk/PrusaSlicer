@@ -8,9 +8,6 @@
 
 <br />
 
->\***Paper:** A. Petsiuk, B. Bloch, D. Vogt, M. Debora, J.M. Pearce, 2023, **"Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer tool clustering".** [**[arXiv]**](https://github.com/apetsiuk/PrusaSlicer/wiki)
-
-
  
 ```
 @article{2210.07466,
