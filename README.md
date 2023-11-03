@@ -24,8 +24,7 @@ Doi = {10.48550/arXiv.2210.07466},
 
 ---
 
-The given fork introduces interlayer color clustering (tool aggregation) features. The algorithm is based on redistributing the order of color print regions based on the allowable batch height and degree of region overlap between adjacent layers.
-
+The given fork introduces tool aggregation features.
 
 | **Regular printing** | **Tool clustering**   |
 | :---:   | :---: |
@@ -57,18 +56,17 @@ The given fork introduces interlayer color clustering (tool aggregation) feature
 ## GUI controls
 
 <img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
-The main control variables are the allowable stack height of layers processed within a single material transition and the maximum allowable intersection with underlying areas of other colors.
+
 
 ## Colormap visualization
 
 <img align="left" alt="gui_controls" src="_images/colormap_sliders.png"/>
-Five-color source model (left), sliced material regions grouped into layer clusters (middle), critical region intersections (right).
+
 
 
 ## Quality tests
 
 <img align="left" alt="gui_controls" src="_images/quality_samples1.png"/>
-The test model has a height of 20 mm and a layer size of 0.2 mm. B - batch size in number of layers, TC - number of tool changes.
 
 
 ## Nozzle area during printing

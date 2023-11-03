@@ -19,6 +19,7 @@
 #include "EdgeGrid.hpp"
 #include "GCode/ThumbnailData.hpp"
 
+
 #include <memory>
 #include <map>
 #include <string>
@@ -204,7 +205,7 @@ public:
         {
             std::cout
                 << "#" << head->number
-                << "--z=" << head->print_z
+                << "--z=" << std::defaultfloat << head->print_z
                 << "--o" << head->object
                 << "--s" << head->support
                 << "--RL" << head->Rlayer

@@ -2863,6 +2863,8 @@ double ATC_check_region_intersection2(LayerRegion& upper, LayerRegion& lower)
     ExPolygons region_intersection = intersection_ex(A_polygons, B_polygons);
 
     double A_expolygon_area = area(A_polygons);
+    //double A_expolygon_perimeter = perimeter
+
     double B_expolygon_area = area(B_polygons);
     double intersection_area = area(region_intersection);
     return intersection_area;
@@ -3348,7 +3350,7 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
         int print_Blayer_idx = printing_node->Blayer;
         int print_region_idx = printing_node->region;
 
-        std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
+        //std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
 
         if (print_Blayer_idx != -1)
         {
@@ -3363,12 +3365,12 @@ void GCode::ATC_plan_wipe_toolchange(Print& print)
                 ATC_printing_map.get_node(printing_node_idx - 1)->need_wipe = true; // wipe before the tool change
 
                 atc_wipe_tower.plan_toolchange(atc_print_z, atc_wiping_layer_height, atc_old_tool, atc_new_tool, atc_wiping_volume);
-                std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
+                //std::cout << "WTower: atc_print_z=" << atc_print_z << " atc_old_tool=" << atc_old_tool << " atc_new_tool=" << atc_new_tool << std::endl;
             }
             prev_region_idx = print_region_idx;
-            std::cout << "\n===================================\n\n\n" << std::endl;
-            std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
-            std::cout << "\n\n\n===================================\n" << std::endl;
+            //std::cout << "\n===================================\n\n\n" << std::endl;
+            //std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
+            //std::cout << "\n\n\n===================================\n" << std::endl;
         }
     }
 
@@ -3425,13 +3427,13 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
         int print_Blayer_idx = printing_node->Blayer;
         int print_region_idx = printing_node->region;
 
-        std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
+        //std::cout << "piece=" << printing_node_idx << " Rlayer=" << print_Rlayer_idx << " region=" << print_region_idx << std::endl;
 
         if (print_Blayer_idx != -1)
         {
             if (print_region_idx != prev_region_idx)
             {
-                std::cout << "wipe tower here" << std::endl;
+                //std::cout << "wipe tower here" << std::endl;
                 atc_wipe_tower_idx += 1;
                 atc_wipe_plan_brick_idx += 1;
                 atc_old_tool = prev_region_idx;
@@ -3451,9 +3453,9 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
                 atc_tool_change_counter += 1;
             }
             prev_region_idx = print_region_idx;
-            std::cout << "\n===================================\n\n\n" << std::endl;
-            std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
-            std::cout << "\n\n\n===================================\n" << std::endl;
+            //std::cout << "\n===================================\n\n\n" << std::endl;
+            //std::cout << "Node=" << printing_node_idx << " Need wipe=" << printing_node->need_wipe << std::endl;
+            //std::cout << "\n\n\n===================================\n" << std::endl;
         }
     }
 
@@ -3480,7 +3482,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     std::cout << "\n********** atc_process_layers ************" << std::endl; 
     std::cout << "********** FINAL MAP ************\n" << std::endl;
     //std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
-    //this->ATC_printing_map.display(this->ATC_printing_map.gethead());
+    this->ATC_printing_map.display(this->ATC_printing_map.gethead());
     std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
 
 
