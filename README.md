@@ -8,16 +8,7 @@
 
 <br />
 
- 
-```
-@article{2210.07466,
-Author = {Petsiuk, Aliaksei and Bloch, Brandon and Vogt, Derek and Debora, Mitchell and Pearce, Joshua M.},
-Title = {Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer tool clustering},
-Year = {2023},
-Eprint = {arXiv:2210.07466},
-Doi = {10.48550/arXiv.2210.07466},
-}
-```
+
 
 ---
 
