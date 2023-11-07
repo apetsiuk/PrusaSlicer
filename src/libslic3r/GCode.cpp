@@ -2870,7 +2870,21 @@ double ATC_check_region_intersection2(LayerRegion& upper, LayerRegion& lower)
     return intersection_area;
 }
 // --------------------------------------------------------------------
+double ATC_find_region_area(LayerRegion& region)
+{
+    ExPolygons region_polygon = to_expolygons(region.slices.surfaces);
+    double region_area = area(region_polygon);
+    return region_area;
+}
 
+double ATC_find_region_perimiter(LayerRegion& region)
+{
+    ExPolygons region_polygon = to_expolygons(region.slices.surfaces);
+    //region_polygon[0].contour;
+    double region_perimiter = region_polygon[0].contour.length();
+    return region_perimiter;
+}
+// --------------------------------------------------------------------
 
 void GCode::layer_batch_labeling(Print& print)
 {
@@ -2888,6 +2902,9 @@ void GCode::layer_batch_labeling(Print& print)
     int batch = 0; // initial batch is zero
     size_t atc_map_number = 0;
 
+    float region_area = 0;
+    float region_perimeter = 0;
+
     float atc_region_order_flip = 1;
 
 
@@ -2896,7 +2913,8 @@ void GCode::layer_batch_labeling(Print& print)
         {
             for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
             {
-                if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                //if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() != 0)
                 {
                     printing_map_initial.append_node(
                         atc_map_number, // consecutive number
@@ -2906,6 +2924,8 @@ void GCode::layer_batch_labeling(Print& print)
                         RL, // layer,
                         BL, // batch layer
                         R,  // region
+                        region_area,  // area
+                        region_perimeter,  // perimeter
                         state, // node processed state
                         batch, // batch
                         need_wipe, // wiping layer
@@ -2981,6 +3001,8 @@ void GCode::layer_batch_labeling(Print& print)
                 RL, // layer,
                 -1, // batch layer
                 -1,  // region
+                region_area,  // area
+                region_perimeter,  // perimeter
                 false, // node processed state
                 -1, // batch
                 need_wipe, // wiping layer
@@ -3044,12 +3066,21 @@ void GCode::layer_batch_labeling(Print& print)
         if (last_node == NULL)
             node = printing_map_initial.node_search(printing_map_initial.gethead(), 0); // get first node with zero-state
 
+        
+
+
         atc_print_z = node->print_z;
         current_Rlayer_idx = node->Rlayer;
         current_Blayer_idx = node->Blayer;
         current_region_idx = node->region;
         candidate_Blayer_idx = node->Blayer + 1;
         candidate_region_idx = node->region; // the same region
+
+        // find area and perimeter
+        //Layer* layer_current_area = print.get_object(0)->layers()[current_Rlayer_idx];
+        //LayerRegion& region_current_area = *layer_current_area->regions()[current_region_idx];
+        //region_area = ATC_find_region_area(region_current_area);
+        //region_perimeter = ATC_find_region_perimiter(region_current_area);
 
         //std::cout << "--STEP-- " << atc_step << ", PROCESSED NODES=" << atc_iterator << std::endl;
         std::cout << "got node {L" << current_Blayer_idx << ", R" << current_region_idx << "}" << " -- candidate {Lc" << candidate_Blayer_idx << ", Rc" << candidate_region_idx << "}" << std::endl;
@@ -3066,6 +3097,8 @@ void GCode::layer_batch_labeling(Print& print)
                 current_Rlayer_idx, // regular layer idx
                 current_Blayer_idx,
                 current_region_idx,
+                region_area,  // area
+                region_perimeter,  // perimeter
                 1, // state = 1
                 batch_new,
                 need_wipe,
@@ -3130,6 +3163,8 @@ void GCode::layer_batch_labeling(Print& print)
                         candidate_node = printing_map_initial.node_search(printing_map_initial.gethead(), candidate_Blayer_idx, candidate_region_idx);
                         if (candidate_node)
                         {
+                            region_area = ATC_find_region_area(region_candidate);
+                            region_perimeter = ATC_find_region_perimiter(region_candidate);
                             // append new node to the batched map
                             printing_map_batched.append_node(
                                 atc_appending_node_number,
@@ -3139,6 +3174,8 @@ void GCode::layer_batch_labeling(Print& print)
                                 candidate_node->Rlayer,
                                 candidate_Blayer_idx,
                                 candidate_region_idx,
+                                region_area,  // area
+                                region_perimeter,  // perimeter
                                 1, // state = 1
                                 batch_new,
                                 need_wipe,
@@ -3252,6 +3289,8 @@ void GCode::layer_batch_labeling(Print& print)
             obj_temp_piece->Rlayer, // layer,
             obj_temp_piece->Blayer, // batch layer
             obj_temp_piece->region,  // region
+            region_area,  // area
+            region_perimeter,  // perimeter
             false, // node processed state
             obj_temp_piece->batch, // batch
             obj_temp_piece->need_wipe, // need_wipe
@@ -3278,6 +3317,8 @@ void GCode::layer_batch_labeling(Print& print)
                         supp_temp_piece->Rlayer, // layer,
                         supp_temp_piece->Blayer, // batch layer
                         obj_temp_piece->region,  // region
+                        region_area,  // area
+                        region_perimeter,  // perimeter
                         false, // node processed state
                         obj_temp_piece->batch, // batch
                         obj_temp_piece->need_wipe, // need_wipe

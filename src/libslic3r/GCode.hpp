@@ -24,6 +24,8 @@
 #include <map>
 #include <string>
 
+#include <iomanip>
+
 #ifdef HAS_PRESSURE_EQUALIZER
 #include "GCode/PressureEqualizer.hpp"
 #endif /* HAS_PRESSURE_EQUALIZER */
@@ -140,6 +142,9 @@ struct printing_piece_UPD {
     int Blayer;
     int region;
 
+    float area;
+    float perimeter;
+
     bool state;
     int batch;
     bool need_wipe;
@@ -162,7 +167,7 @@ public:
         tail = NULL;
     }
 
-    void append_node(size_t number, float print_z, bool object, bool support, int Rlayer, int Blayer, int region, bool state, int batch, bool need_wipe, float region_intersection)
+    void append_node(size_t number, float print_z, bool object, bool support, int Rlayer, int Blayer, int region, float area, float perimeter, bool state, int batch, bool need_wipe, float region_intersection)
     {
         printing_piece_UPD* tmp = new printing_piece_UPD;
         tmp->number = number;
@@ -172,6 +177,8 @@ public:
         tmp->Rlayer = Rlayer;
         tmp->Blayer = Blayer;
         tmp->region = region;
+        tmp->area = area;
+        tmp->perimeter = perimeter;
         tmp->state = state;
         tmp->batch = batch;
         tmp->need_wipe = need_wipe;
@@ -203,14 +210,18 @@ public:
         }
         else
         {
+            std::cout << std::fixed;
+            std::cout << std::setprecision(2);
             std::cout
                 << "#" << head->number
-                << "--z=" << std::defaultfloat << head->print_z
+                << "--z=" << head->print_z
                 << "--o" << head->object
                 << "--s" << head->support
                 << "--RL" << head->Rlayer
                 << ", {BL" << head->Blayer
                 << ", R" << head->region << "}"
+                << ", A=" << head->area
+                << ", P=" << head->perimeter
                 << "--b" << head->batch
                 << "--w" << head->need_wipe
                 << "--region_int=" << head->region_intersection
