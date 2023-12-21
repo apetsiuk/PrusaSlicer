@@ -41,31 +41,34 @@ The given fork introduces tool aggregation features. The basis of the algorithm 
 - :x: Adaptive region intersections
 - :x: Adaptive batch height
 
+
 ## GUI controls
 
 <img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
+The main variables are "Safe batch height" and "Max color intersection area".
 
 
 ## Colormap visualization
 
-<img align="left" alt="gui_controls" src="_images/colormap_sliders.png"/>
+<img align="left" alt="colormap_sliders" src="_images/colormap_sliders.png"/>
+Added two sliders to the legend: ITC layer batching and ITC critical intersections
 
 
 
 ## Quality tests
 
-<img align="left" alt="gui_controls" src="_images/quality_samples1.png"/>
+<img align="left" alt="quality_samples1" src="_images/quality_samples1.png"/>
 
 
 ## Nozzle area during printing
 
-<img align="left" alt="gui_controls" src="_images/nozzle_closeup.png"/>
+<img align="left" alt="nozzle_closeup" src="_images/nozzle_closeup.png"/>
 Video from an endoscope camera.
 
 
 ## Printed samples
 
-<img align="left" alt="gui_controls" src="_images/printed_samples.png"/>
+<img align="left" alt="printed_samples" src="_images/printed_samples.png"/>
 Various models printed using tool clustering.
 
 ----
