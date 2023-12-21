@@ -45,12 +45,14 @@ The given fork introduces tool aggregation features. The basis of the algorithm 
 ## GUI controls
 
 <img align="left" alt="gui_controls" src="_images/gui_controls.png"/>
+
 The main variables are "Safe batch height" and "Max color intersection area".
 
 
 ## Colormap visualization
 
 <img align="left" alt="colormap_sliders" src="_images/colormap_sliders.png"/>
+
 Added two sliders to the legend: ITC layer batching and ITC critical intersections
 
 
