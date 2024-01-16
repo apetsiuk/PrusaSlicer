@@ -4,7 +4,7 @@
 <img align="left" width="100" alt="logo" src="_images/Prusa_logo_batched.png"/>
 
 # PrusaSlicer: Interlayer Tool Clustering Fork
-### Uses less material (1.7x), time and energy (1.4x)* 
+### Uses less material, time, and energy 
 
 <br />
 
