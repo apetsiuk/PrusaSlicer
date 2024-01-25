@@ -8,9 +8,6 @@
 
 <br />
 
->\*A. Petsiuk, B. Bloch, D. Vogt, M. Debora, J.M. Pearce, 2023, **"Toolpath optimization for multi-material/color additive manufacturing through non-planar interlayer tool clustering".** [**[SSRN]**](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4655383)
-
----
 
 The given fork introduces tool aggregation features. The basis of the algorithm is to redistribute the fabrication order of color regions based on the maximum batch height and the degree of intersection of adjacent regions.
 
