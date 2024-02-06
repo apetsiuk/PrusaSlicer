@@ -1,5 +1,5 @@
 
-[wiki](https://github.com/apetsiuk/PrusaSlicer/wiki)
+
 
 <img align="left" width="100" alt="logo" src="_images/Prusa_logo_batched.png"/>
 
@@ -8,6 +8,7 @@
 
 <br />
 
+[Demo video](https://www.youtube.com/watch?v=RipTRgQQOnU)
 
 The given fork introduces tool aggregation features. The basis of the algorithm is to redistribute the fabrication order of color regions based on the maximum batch height and the degree of intersection of adjacent regions.
 
