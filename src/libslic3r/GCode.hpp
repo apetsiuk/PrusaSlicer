@@ -214,7 +214,7 @@ public:
             std::cout << std::setprecision(2);
             std::cout
                 << "#" << head->number
-                << "--z=" << head->print_z
+                << "--z=" << printf("%.2f", head->print_z)
                 << "--o" << head->object
                 << "--s" << head->support
                 << "--RL" << head->Rlayer
@@ -421,8 +421,10 @@ public:
 
     //----------------------------------------------------------
     void                    layer_batch_labeling(Print& print);
+    void                    layer_batch_labeling_soluble_supports(Print& print);
     void                    ATC_plan_wipe_toolchange(Print& print);
     void                    ATC_plan_wipe_toolchange2(Print& print);
+    void                    ATC_plan_wipe_toolchange2_soluble_supports(Print& print);
     atc_linked_list_UPD     ATC_printing_map;
     //----------------------------------------------------------
 
