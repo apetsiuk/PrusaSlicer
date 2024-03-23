@@ -3398,55 +3398,6 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
                     atc_map_number += 1;
                 }
             }
-            /*
-            if (atc_region_order_flip > 0)
-            {
-                for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
-                {
-                    if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
-                    {
-                        printing_map_initial.append_node(
-                            atc_map_number, // consecutive number
-                            layers_to_print_ATC[RL].object_layer->print_z, // print_z
-                            true, // object layer
-                            false, // support layer
-                            RL, // layer,
-                            BL, // batch layer
-                            R,  // region
-                            state, // node processed state
-                            batch, // batch
-                            need_wipe, // wiping layer
-                            0 // region_intersection
-                        );
-                        atc_map_number += 1;
-                    }
-                }
-            }
-
-            if (atc_region_order_flip < 0)
-            {
-                for (int R = layers_to_print_ATC[RL].object_layer->regions().size()-1; R > -1 ; R--)
-                {
-                    if (layers_to_print_ATC[RL].object_layer->regions()[R]->slices.surfaces.size() != 0)
-                    {
-                        printing_map_initial.append_node(
-                            atc_map_number, // consecutive number
-                            layers_to_print_ATC[RL].object_layer->print_z, // print_z
-                            true, // object layer
-                            false, // support layer
-                            RL, // layer,
-                            BL, // batch layer
-                            R,  // region
-                            state, // node processed state
-                            batch, // batch
-                            need_wipe, // wiping layer
-                            0 // region_intersection
-                        );
-                        atc_map_number += 1;
-                    }
-                }
-            }
-            */
 
             BL += 1;
             atc_region_order_flip = atc_region_order_flip * (-1);
@@ -3482,8 +3433,6 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
     atc_linked_list_UPD::display(support_map.gethead());
 
 
-
-
     int printing_pieces_count = printing_map_initial.get_count();
     int atc_appending_node_number = 0;
     float atc_print_z = 0;
@@ -3502,8 +3451,6 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
     int max_layers_in_object = print.get_object(0)->layers().size();
     int intersected_node_state;
 
-    //int atc_iterator = 0;
-    //int atc_step = 0;
 
     int intersected_region;
     struct printing_piece_UPD* node;
@@ -3530,9 +3477,6 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
         if (last_node == NULL)
             node = printing_map_initial.node_search(printing_map_initial.gethead(), 0); // get first node with zero-state
 
-
-
-
         atc_print_z = node->print_z;
         current_Rlayer_idx = node->Rlayer;
         current_Blayer_idx = node->Blayer;
@@ -3548,8 +3492,6 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
 
         //std::cout << "--STEP-- " << atc_step << ", PROCESSED NODES=" << atc_iterator << std::endl;
         std::cout << "got node {L" << current_Blayer_idx << ", R" << current_region_idx << "}" << " -- candidate {Lc" << candidate_Blayer_idx << ", Rc" << candidate_region_idx << "}" << std::endl;
-
-
 
         if (node->state == 0)
         {
@@ -3780,7 +3722,8 @@ void GCode::layer_batch_labeling_soluble_supports(Print& print)
                         true, // support layer
                         supp_temp_piece->Rlayer, // layer,
                         supp_temp_piece->Blayer, // batch layer
-                        obj_temp_piece->region,  // region
+                        //obj_temp_piece->region,  // region
+                        3,
                         region_area,  // area
                         region_perimeter,  // perimeter
                         false, // node processed state
@@ -4148,6 +4091,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
                         if (interface_dontcare)
                             interface_extruder = dontcare_extruder;
                     }
+                    //support_extruder = printing_node->region;
+                    //interface_extruder = printing_node->region;
                     // Both the support and the support interface are printed with the same extruder, therefore
                     // the interface may be interleaved with the support base.
                     bool single_extruder = !has_support || support_extruder == interface_extruder;
