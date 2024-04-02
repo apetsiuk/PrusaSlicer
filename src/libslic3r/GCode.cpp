@@ -3924,6 +3924,7 @@ void GCode::ATC_plan_wipe_toolchange2(Print& print)
 void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, GCodeOutputStream& output_stream)
 {
     bool ATC_soluble_supports = false;
+    bool ATC_export_csv = true;
     
     // for non-soluble supports
     if (!ATC_soluble_supports) {
@@ -3942,6 +3943,36 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     //std::cout << "\FINAL MAP (" << this->ATC_printing_map.get_count() << "):" << std::endl;
     this->ATC_printing_map.display(this->ATC_printing_map.gethead());
     std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
+
+    // export CSV file
+    if (ATC_export_csv) {
+        std::ofstream myfile;
+        myfile.open("C:/!! MOSAIC MFG/PRUSA_test_prints/FINAL_MAP_001.csv");
+        myfile << "-=0101=-\n";
+        myfile << "No.,Z height,Object,Support,RL,BL,R,Batch,Area,Perimeter,Shared perimeter,Intersection,\n";
+        //myfile << "c,s,v,\n";
+        struct printing_piece_UPD* ATC_CSV_printing_piece;
+        for (int i = 0; i < this->ATC_printing_map.get_count(); i++)
+        {
+            ATC_CSV_printing_piece = this->ATC_printing_map.get_node(i);
+            //int print_Rlayer_idx = obj_temp_piece->Rlayer;
+            myfile
+                << std::to_string(i) << ","
+                << std::to_string(ATC_CSV_printing_piece->print_z) << ","
+                << std::to_string(ATC_CSV_printing_piece->object) << ","
+                << std::to_string(ATC_CSV_printing_piece->support) << ","
+                << std::to_string(ATC_CSV_printing_piece->Rlayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->Blayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->region) << ","
+                << std::to_string(ATC_CSV_printing_piece->batch) << ","
+                << std::to_string(ATC_CSV_printing_piece->area) << ","
+                << std::to_string(ATC_CSV_printing_piece->perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->shared_perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->intersection_self) << ","
+                << "\n";
+        }
+        myfile.close();
+    }
 
 
     //std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
