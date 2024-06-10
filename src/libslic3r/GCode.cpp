@@ -2078,7 +2078,7 @@ void GCode::_do_batched_export(Print& print, GCodeOutputStream& file, Thumbnails
 
         this->atc_process_layers(print, tool_ordering, file);
         // this->process_layers(print, tool_ordering, print_object_instances_ordering, layers_to_print, file);
-        // ===========================================================
+        // ============================================================
 
 #ifdef HAS_PRESSURE_EQUALIZER
         if (m_pressure_equalizer)
