@@ -2872,19 +2872,146 @@ double ATC_check_region_intersection2(LayerRegion& upper, LayerRegion& lower)
 // --------------------------------------------------------------------
 double ATC_find_region_area(LayerRegion& region)
 {
-    ExPolygons region_polygon = to_expolygons(region.slices.surfaces);
-    double region_area = area(region_polygon);
+    ExPolygons region_expolygon = to_expolygons(region.slices.surfaces);
+    double region_area = area(region_expolygon);
     return region_area;
 }
 
 double ATC_find_region_perimiter(LayerRegion& region)
 {
     ExPolygons region_polygon = to_expolygons(region.slices.surfaces);
-    //region_polygon[0].contour;
-    double region_perimiter = region_polygon[0].contour.length();
+    double region_perimiter = 0;
+    for (int i = 0; i < region_polygon.size(); i++)
+    {
+        region_perimiter = region_perimiter + region_polygon[i].contour.length();
+    }
     return region_perimiter;
 }
 // --------------------------------------------------------------------
+
+void GCode::ATC_export_CSV(Print& print)
+{
+    std::vector<GCode::LayerToPrint> layers_to_print_ATC = collect_layers_to_print(*print.m_objects[0]);
+    std::ofstream myfile;
+
+    double region_area = 0;
+    double region_perimeter = 0;
+
+
+    myfile.open("DEPENDENCY_GRAPH_001.csv");
+    myfile << "-=to_python=-\n";
+    myfile << "No.,Layer,Region,Exist,X,Y,Tool,*R0,*R1,*R2,*R3,*R4,*R5,*R6,*R7,Area,Perimeter,\n";
+
+
+    size_t number = 0;
+
+    for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
+        if (layers_to_print_ATC[RL].object_layer != NULL)
+        {
+            Layer* current_layer = print.get_object(0)->layers()[RL];
+            for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
+            {
+                LayerRegion& current_region = *current_layer->regions()[R];
+                region_area = ATC_find_region_area(current_region);
+                number++;
+                myfile
+                    << std::to_string(number) << ","
+                    << std::to_string(RL) << ","
+                    << std::to_string(R) << ",";
+                    
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() != 0)
+                {
+                    myfile
+                        << std::to_string(1) << ","; // Exist = 1
+                }
+                else
+                {
+                    myfile
+                        << std::to_string(0) << ","; // Exist = 0
+                }
+                myfile
+                    << std::to_string(0) << "," // X
+                    << std::to_string(0) << "," // Y
+                    << std::to_string(R) << ","; // Tool = region (color)
+
+                
+                
+                if (RL == 0 || layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() == 0)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        myfile << std::to_string(0) << ","; // *Rs = zeros if the region does not exist or it is a first layer
+                    }
+                }
+
+                if (RL != 0 && layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() != 0)
+                {
+                    Layer* layer_below = print.get_object(0)->layers()[RL-1];
+                    for (int color = 0; color < layers_to_print_ATC[RL].object_layer->regions().size(); color++)
+                    {
+                        LayerRegion& region_below = *layer_below->regions()[color];
+                        double region_intersection = ATC_check_region_intersection2(current_region, region_below);
+                        myfile << std::to_string(region_intersection) << ","; // *Rs
+                        /*
+                        if (region_below.perimeters.entities.size() != 0)
+                        {
+                            double region_intersection = ATC_check_region_intersection2(current_region, region_below);
+                            myfile << std::to_string(region_intersection) << ","; // *Rs
+                        }
+                        else
+                        {
+                            myfile << std::to_string(0) << ","; // *Rs
+                        }
+                        */
+                    }
+                }
+
+
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() != 0)
+                {
+                    region_perimeter = ATC_find_region_perimiter(current_region);
+                    myfile
+                        << std::to_string(region_area) << "," // Area
+                        << std::to_string(region_perimeter) << ","; // Perimeter
+                }
+                else
+                {
+                    myfile
+                        << std::to_string(0) << "," // Area
+                        << std::to_string(0) << ","; // Perimeter
+                }
+                myfile 
+                    << "\n";
+
+            }
+        }
+    }
+
+
+        /*struct printing_piece_UPD* ATC_CSV_printing_piece;
+        for (int i = 0; i < this->ATC_printing_map.get_count(); i++)
+        {
+            ATC_CSV_printing_piece = this->ATC_printing_map.get_node(i);
+            //int print_Rlayer_idx = obj_temp_piece->Rlayer;
+            myfile
+                << std::to_string(i) << ","
+                << std::to_string(ATC_CSV_printing_piece->print_z) << ","
+                << std::to_string(ATC_CSV_printing_piece->object) << ","
+                << std::to_string(ATC_CSV_printing_piece->support) << ","
+                << std::to_string(ATC_CSV_printing_piece->Rlayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->Blayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->region) << ","
+                << std::to_string(ATC_CSV_printing_piece->batch) << ","
+                << std::to_string(ATC_CSV_printing_piece->area) << ","
+                << std::to_string(ATC_CSV_printing_piece->perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->shared_perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->intersection_self) << ","
+                << "\n";
+        } */
+    myfile.close();
+}
+
+
 
 void GCode::layer_batch_labeling(Print& print)
 {
@@ -3925,6 +4052,8 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
 {
     bool ATC_soluble_supports = false;
     bool ATC_export_csv = true;
+
+    this->ATC_export_CSV(print); // export CSV
     
     // for non-soluble supports
     if (!ATC_soluble_supports) {
@@ -3945,6 +4074,35 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     std::cout << "\n******** EOF FINAL MAP **********\n" << std::endl;
 
     // export CSV file
+    if (ATC_export_csv) {
+        std::ofstream myfile;
+        myfile.open("FINAL_MAP_003.csv");
+        //myfile << "-=0101=-\n";
+        myfile << "No.,Layer,Region,Exist,X,Y,Tool,*R0,*R1,*R2,*R3,*R4,*R5,*R6,*R7,Area,Perimeter,\n";
+        //myfile << "c,s,v,\n";
+        struct printing_piece_UPD* ATC_CSV_printing_piece;
+        for (int i = 0; i < this->ATC_printing_map.get_count(); i++)
+        {
+            ATC_CSV_printing_piece = this->ATC_printing_map.get_node(i);
+            //int print_Rlayer_idx = obj_temp_piece->Rlayer;
+            myfile
+                << std::to_string(i) << ","
+                << std::to_string(ATC_CSV_printing_piece->print_z) << ","
+                << std::to_string(ATC_CSV_printing_piece->object) << ","
+                << std::to_string(ATC_CSV_printing_piece->support) << ","
+                << std::to_string(ATC_CSV_printing_piece->Rlayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->Blayer) << ","
+                << std::to_string(ATC_CSV_printing_piece->region) << ","
+                << std::to_string(ATC_CSV_printing_piece->batch) << ","
+                << std::to_string(ATC_CSV_printing_piece->area) << ","
+                << std::to_string(ATC_CSV_printing_piece->perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->shared_perimeter) << ","
+                //<< std::to_string(ATC_CSV_printing_piece->intersection_self) << ","
+                << "\n";
+        }
+        myfile.close();
+    }
+    /*
     if (ATC_export_csv) {
         std::ofstream myfile;
         myfile.open("FINAL_MAP_002.csv");
@@ -3973,7 +4131,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
         }
         myfile.close();
     }
-
+    */
 
     //std::cout << "--- GCode::atc_process_layers() ---" << std::endl;
     print.get_ATC_printing_map().display(print.get_ATC_printing_map().gethead());
