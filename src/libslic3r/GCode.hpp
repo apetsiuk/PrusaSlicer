@@ -123,6 +123,104 @@ public:
 
 
 
+struct printing_piece_CSV {
+    size_t number;
+    int layer;
+    int region;
+    bool exist;
+    float X;
+    float Y;
+    float R0;
+    float R1;
+    float R2;
+    float R3;
+    float R4;
+    float R5;
+    float R6;
+    float R7;
+    float area;
+    float perimeter;
+    printing_piece_CSV* next;
+};
+
+
+class atc_printing_CSV
+{
+private:
+    printing_piece_CSV* head, * tail;
+public:
+    atc_printing_CSV()
+    {
+        head = NULL;
+        tail = NULL;
+    }
+
+    
+    void append_node(size_t number, int layer, int region, bool exist, float X, float Y, float R0, float R1, float R2, float R3, float R4, float R5, float R6, float R7, float area, float perimeter)
+    {
+        printing_piece_CSV* tmp = new printing_piece_CSV;
+        tmp->number = number;
+        tmp->layer = layer;
+        tmp->region = region;
+        tmp->exist = exist;
+        tmp->X = X;
+        tmp->Y = Y;
+        tmp->R0 = R0;
+        tmp->R1 = R1;
+        tmp->R2 = R2;
+        tmp->R3 = R3;
+        tmp->R4 = R4;
+        tmp->R5 = R5;
+        tmp->R6 = R6;
+        tmp->R7 = R7;
+        tmp->area = area;
+        tmp->perimeter = perimeter;
+        tmp->next = NULL;
+
+        if (head == NULL)
+        {
+            head = tmp;
+            tail = tmp;
+        }
+        else
+        {
+            tail->next = tmp;
+            tail = tail->next;
+        }
+    }
+    
+    printing_piece_CSV* gethead()
+    {
+        return head;
+    }
+
+    int get_count()
+    {
+        int number_of_nodes = 0;
+        printing_piece_CSV* current = head;
+        while (current != NULL)
+        {
+            number_of_nodes++;
+            current = current->next;
+        }
+        return number_of_nodes;
+    }
+
+    struct printing_piece_CSV* get_node(int position)
+    {
+        printing_piece_CSV* node;
+        node = head;
+        for (int node_position = 0; node_position < position; node_position++)
+        {
+            node = node->next;
+        }
+        return node;
+    }
+
+};
+
+
+
 
 
 
@@ -421,12 +519,14 @@ public:
 
     //----------------------------------------------------------
     void                    ATC_export_CSV(Print& print);
+    void                    ATC_export_CSV2(Print& print);
     void                    layer_batch_labeling(Print& print);
     void                    layer_batch_labeling_soluble_supports(Print& print);
     void                    ATC_plan_wipe_toolchange(Print& print);
     void                    ATC_plan_wipe_toolchange2(Print& print);
     void                    ATC_plan_wipe_toolchange2_soluble_supports(Print& print);
     atc_linked_list_UPD     ATC_printing_map;
+    atc_printing_CSV        ATC_printing_CSV;
     //----------------------------------------------------------
 
 private:

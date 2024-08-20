@@ -2889,13 +2889,133 @@ double ATC_find_region_perimiter(LayerRegion& region)
 }
 // --------------------------------------------------------------------
 
+void GCode::ATC_export_CSV2(Print& print)
+{
+    std::vector<GCode::LayerToPrint> layers_to_print_ATC = collect_layers_to_print(*print.m_objects[0]);
+    atc_printing_CSV printing_map_CVS;
+    std::cout << "-- GCode:: ATC_export_CSV2() --" << std::endl;
+    struct printing_piece_CSV* temp_CSV_piece;
+
+    std::ofstream myfile;
+    double region_area = 0;
+    double region_perimeter = 0;
+
+    size_t csv_number = 0;
+    
+    for (size_t RL = 0; RL < layers_to_print_ATC.size(); RL++) {
+        if (layers_to_print_ATC[RL].object_layer != NULL)
+        {
+            Layer* current_layer = print.get_object(0)->layers()[RL];
+            for (size_t R = 0; R < layers_to_print_ATC[RL].object_layer->regions().size(); R++)
+            {
+                float bound_X = 0;
+                float bound_Y = 0;
+                bool region_exist = 1;
+
+                float R0 = 3;
+                float R1 = 3;
+                float R2 = 3;
+                float R3 = 3;
+                float R4 = 3;
+                float R5 = 3;
+                float R6 = 3;
+                float R7 = 3;
+                
+                LayerRegion& current_region = *current_layer->regions()[R];
+                region_area = ATC_find_region_area(current_region);
+                csv_number++;
+
+                if (layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() != 0)
+                {
+                    region_perimeter = ATC_find_region_perimiter(current_region);
+                    region_exist = 1; // Exist = 1
+                }
+                else
+                {
+                    region_perimeter = 0;
+                    region_exist = 0; // Exist = 0
+                }
+
+                if (RL == 0 || layers_to_print_ATC[RL].object_layer->regions()[R]->perimeters.entities.size() == 0)
+                {
+                    // *Rs = zeros if the region does not exist or it is a first layer
+                    R0 = 0;
+                    R1 = 0;
+                    R2 = 0;
+                    R3 = 0;
+                    R4 = 0;
+                    R5 = 0;
+                    R6 = 0;
+                    R7 = 0;
+                }
+
+                printing_map_CVS.append_node(
+                    csv_number, // consecutive number
+                    RL, // layer
+                    R,  // region
+                    region_exist,  // exist
+                    bound_X,  // X
+                    bound_Y,  // Y
+                    R0,  // R0
+                    R1,  // R1
+                    R2,  // R2
+                    R3,  // R3
+                    R4,  // R4
+                    R5,  // R5
+                    R6,  // R6
+                    R7,  // R7
+                    region_area,  // region area
+                    region_perimeter  // region perimeter
+                );
+            }
+        }
+    }
+
+    // write the obtained linked list to csv file
+
+    myfile.open("NEW_GRAPH_001.csv");
+    myfile << "-=to_python=-\n";
+    myfile << "No.,Layer,Region,Exist,X,Y,*R0,*R1,*R2,*R3,*R4,*R5,*R6,*R7,Area,Perimeter,\n";
+
+    for (int i = 0; i < printing_map_CVS.get_count(); i++)
+    {
+        temp_CSV_piece = printing_map_CVS.get_node(i);
+
+        myfile
+            << std::to_string(temp_CSV_piece->number) << ","
+            << std::to_string(temp_CSV_piece->layer) << ","
+            << std::to_string(temp_CSV_piece->region) << ","
+            << std::to_string(temp_CSV_piece->X) << ","
+            << std::to_string(temp_CSV_piece->Y) << ","
+            << std::to_string(temp_CSV_piece->R0) << ","
+            << std::to_string(temp_CSV_piece->R1) << ","
+            << std::to_string(temp_CSV_piece->R2) << ","
+            << std::to_string(temp_CSV_piece->R3) << ","
+            << std::to_string(temp_CSV_piece->R4) << ","
+            << std::to_string(temp_CSV_piece->R5) << ","
+            << std::to_string(temp_CSV_piece->R6) << ","
+            << std::to_string(temp_CSV_piece->R7) << ","
+            << std::to_string(temp_CSV_piece->area) << ","
+            << std::to_string(temp_CSV_piece->perimeter) << ","
+            << "\n";
+    }
+
+    myfile.close();
+    
+}
+
+
 void GCode::ATC_export_CSV(Print& print)
 {
     std::vector<GCode::LayerToPrint> layers_to_print_ATC = collect_layers_to_print(*print.m_objects[0]);
+    atc_printing_CSV printing_map_CVS;
     std::ofstream myfile;
 
     double region_area = 0;
     double region_perimeter = 0;
+
+    std::cout << "-- GCode:: ATC_export_CSV() --" << std::endl;
+    atc_linked_list_UPD printing_map_initial, printing_map_batched;
 
 
     myfile.open("DEPENDENCY_GRAPH_001.csv");
@@ -4053,7 +4173,7 @@ void GCode::atc_process_layers(Print& print, const ToolOrdering& tool_ordering, 
     bool ATC_soluble_supports = false;
     bool ATC_export_csv = true;
 
-    this->ATC_export_CSV(print); // export CSV
+    this->ATC_export_CSV2(print); // export CSV
     
     // for non-soluble supports
     if (!ATC_soluble_supports) {

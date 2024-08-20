@@ -152,7 +152,7 @@ void BackgroundSlicingProcess::process_fff()
 	wxQueueEvent(GUI::wxGetApp().mainframe->m_plater, evt.Clone());
 
 	
-	if(m_print->full_print_config().option<ConfigOptionBool>("atc_enable_tool_clustering")->value == true) // atc layer batching
+	if(m_print->full_print_config().option<ConfigOptionBool>("atc_enable_tool_clustering")->value == true) // itc layer batching
 		m_fff_print->export_batched_gcode(m_temp_output_path, m_gcode_result, [this](const ThumbnailsParams& params) { return this->render_thumbnails(params); }); // atc layer batching
 	else // regular slicing
 		m_fff_print->export_gcode(m_temp_output_path, m_gcode_result, [this](const ThumbnailsParams& params) { return this->render_thumbnails(params); }); // regular slicing
